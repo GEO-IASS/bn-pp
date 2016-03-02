@@ -4,11 +4,12 @@
 #include <vector>
 
 #include "variable.hh"
+#include "factor.hh"
 
 namespace bn {
 
 int
-read_uai_model(const char *filename, unsigned &order, std::vector<const Variable*> &variables);
+read_uai_model(const char *filename, unsigned &order, std::vector<Variable*> &variables, std::vector<Factor*> &factors);
 
 }
 

@@ -1,7 +1,7 @@
 CC=g++
 CXXFLAGS=-Wall -Wextra -ansi -pedantic -std=c++11
 
-OBJ=variable.o domain.o io.o main.o
+OBJ=variable.o domain.o factor.o io.o main.o
 
 all: bn
 
@@ -12,6 +12,9 @@ main.o: main.cpp
 	$(CC) $(CXXFLAGS) -c $<
 
 io.o: io.cpp io.hh
+	$(CC) $(CXXFLAGS) -c $<
+
+factor.o: factor.cpp factor.hh
 	$(CC) $(CXXFLAGS) -c $<
 
 domain.o: domain.cpp domain.hh

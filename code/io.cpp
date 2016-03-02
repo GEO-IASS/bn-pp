@@ -52,7 +52,7 @@ read_file_header(ifstream &input_file)
 }
 
 void
-read_variables(ifstream &input_file, unsigned &order, vector<const Variable*> &variables)
+read_variables(ifstream &input_file, unsigned &order, vector<Variable*> &variables)
 {
     read_next_integer(input_file, order);
     unsigned sz = 0;
@@ -63,7 +63,7 @@ read_variables(ifstream &input_file, unsigned &order, vector<const Variable*> &v
 }
 
 void
-read_factors(ifstream &input_file, unsigned model_order, vector<const Variable*> &variables)
+read_factors(ifstream &input_file, unsigned model_order, vector<Variable*> &variables, vector<Factor*> &factors)
 {
     unsigned order;
     read_next_integer(input_file, order);
@@ -79,19 +79,32 @@ read_factors(ifstream &input_file, unsigned model_order, vector<const Variable*>
             scope.push_back(variables[id]);
         }
 
-        Domain d(scope);
-        cout << d << endl;
+        factors.push_back(new Factor(new Domain(scope)));
+    }
+
+    for (unsigned i = 0; i < order; ++i) {
+        unsigned factor_size;
+        read_next_integer(input_file, factor_size);
+
+        double partition = 0;
+        for (unsigned j = 0; j < factor_size; ++j) {
+            double value;
+            read_next_double(input_file, value);
+            (*(factors[i]))[j] = value;
+            partition += value;
+        }
+        factors[i]->partition(partition);
     }
 }
 
 int
-read_uai_model(const char *filename, unsigned &order, vector<const Variable*> &variables)
+read_uai_model(const char *filename, unsigned &order, vector<Variable*> &variables, vector<Factor*> &factors)
 {
     ifstream input_file(filename);
     if (input_file.is_open()) {
         read_file_header(input_file);
         read_variables(input_file, order, variables);
-        read_factors(input_file, order, variables);
+        read_factors(input_file, order, variables, factors);
         input_file.close();
         return 0;
     }

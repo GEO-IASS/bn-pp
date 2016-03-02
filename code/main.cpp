@@ -33,12 +33,16 @@ main(int argc, char *argv[])
 	}
 
 	unsigned order;
-	vector<const Variable*> variables;
-	read_uai_model(filename, order, variables);
+	vector<Variable*> variables;
+	vector<Factor*> factors;
+	read_uai_model(filename, order, variables, factors);
 
 	if (options["verbose"]) {
 		for (auto pv : variables) {
 			cout << *pv << endl;
+		}
+		for (auto pf : factors) {
+			cout << *pf << endl;
 		}
 	}
 
