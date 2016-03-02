@@ -1,9 +1,11 @@
 #include "io.hh"
+#include "domain.hh"
 
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
+#include <cassert>
 
 using namespace std;
 
@@ -60,6 +62,28 @@ read_variables(ifstream &input_file, unsigned &order, vector<const Variable*> &v
     }
 }
 
+void
+read_factors(ifstream &input_file, unsigned model_order, vector<const Variable*> &variables)
+{
+    unsigned order;
+    read_next_integer(input_file, order);
+    assert(order == model_order);
+
+    unsigned width, id;
+    for (unsigned i = 0; i < order; ++i) {
+        read_next_integer(input_file, width);
+
+        vector<const Variable*> scope;
+        for (unsigned j = 0; j < width; ++j) {
+            read_next_integer(input_file, id);
+            scope.push_back(variables[id]);
+        }
+
+        Domain d(scope);
+        cout << d << endl;
+    }
+}
+
 int
 read_uai_model(const char *filename, unsigned &order, vector<const Variable*> &variables)
 {
@@ -67,6 +91,7 @@ read_uai_model(const char *filename, unsigned &order, vector<const Variable*> &v
     if (input_file.is_open()) {
         read_file_header(input_file);
         read_variables(input_file, order, variables);
+        read_factors(input_file, order, variables);
         input_file.close();
         return 0;
     }
