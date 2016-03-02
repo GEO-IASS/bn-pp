@@ -15,6 +15,10 @@ public:
     unsigned width() const { return _width; };
     unsigned size()  const { return _size;  };
 
+    const Variable *operator[](unsigned i) const;
+
+    void next_valuation(std::vector<unsigned> &valuation) const;
+
     friend std::ostream &operator<<(std::ostream &o, const Domain &v);
 
 private:

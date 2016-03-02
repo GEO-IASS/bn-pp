@@ -19,6 +19,25 @@ Domain::Domain(vector<const Variable*> scope) : _scope(scope), _width(scope.size
     }
 }
 
+const Variable*
+Domain::operator[](unsigned i) const
+{
+    if (i < _width) return _scope[i];
+    else throw "Domain::operator[unsigned i]: Index out of range!";
+}
+
+void
+Domain::next_valuation(vector<unsigned> &valuation) const
+{
+    int j;
+    for (j = valuation.size()-1; j >= 0 && valuation[j] == _scope[j]->size()-1; --j) {
+        valuation[j] = 0;
+    }
+    if (j >= 0) {
+        valuation[j]++;
+    }
+}
+
 ostream&
 operator<<(ostream &o, const Domain &d)
 {
