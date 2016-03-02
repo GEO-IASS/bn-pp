@@ -10,6 +10,7 @@ namespace bn {
 class Factor {
 public:
     Factor(const Domain *domain);
+    ~Factor();
 
     unsigned size()    const { return _domain->size();  }
     unsigned width()   const { return _domain->width(); }

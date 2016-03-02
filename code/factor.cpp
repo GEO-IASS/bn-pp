@@ -11,6 +11,11 @@ Factor::Factor(const Domain *domain) : _values(vector<double>(domain->size()))
 	_partition = 0.0;
 }
 
+Factor::~Factor()
+{
+	delete _domain;
+}
+
 const double&
 Factor::operator[](unsigned i) const
 {
@@ -31,11 +36,12 @@ operator<<(ostream &os, const Factor &f)
     const Domain *domain = f._domain;
     int width = f.width();
     int size = f.size();
+    double partition = f._partition;
 
     os << "Factor(";
     os << "width:" << width << ", ";
     os << "size:" << size << ", ";
-    os << "partition:" << f.partition() << ")" << endl;
+    os << "partition:" << partition << ")" << endl;
 
     // scope
     for (int i = 0; i < width; ++i) {
