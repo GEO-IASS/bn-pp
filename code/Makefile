@@ -1,7 +1,7 @@
 CC=g++
-CXXFLAGS=-Wall -Wextra -ansi -pedantic -std=c++11
+CXXFLAGS=-Wall -Wextra -ansi -pedantic -std=c++11 -g
 
-OBJ=variable.o domain.o factor.o io.o main.o
+OBJ=variable.o domain.o factor.o model.o io.o main.o
 
 all: bn
 
@@ -9,6 +9,9 @@ bn: $(OBJ)
 	$(CC) $^ -o $@
 
 main.o: main.cpp
+	$(CC) $(CXXFLAGS) -c $<
+
+model.o: model.cpp model.hh
 	$(CC) $(CXXFLAGS) -c $<
 
 io.o: io.cpp io.hh

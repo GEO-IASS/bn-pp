@@ -98,13 +98,16 @@ read_factors(ifstream &input_file, unsigned model_order, vector<Variable*> &vari
 }
 
 int
-read_uai_model(const char *filename, unsigned &order, vector<Variable*> &variables, vector<Factor*> &factors)
+read_uai_model(const char *filename, unsigned &order, BN **model)
 {
     ifstream input_file(filename);
     if (input_file.is_open()) {
+        vector<Variable*> variables;
+        vector<Factor*> factors;
         read_file_header(input_file);
         read_variables(input_file, order, variables);
         read_factors(input_file, order, variables, factors);
+        *model = new BN(filename, variables, factors);
         input_file.close();
         return 0;
     }

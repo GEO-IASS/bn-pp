@@ -33,21 +33,14 @@ main(int argc, char *argv[])
 	}
 
 	unsigned order;
-	vector<Variable*> variables;
-	vector<Factor*> factors;
-	read_uai_model(filename, order, variables, factors);
+	BN *model;
+	read_uai_model(filename, order, &model);
 
 	if (options["verbose"]) {
-		cout << ">> Variables" << endl;
-		for (auto pv : variables) {
-			cout << *pv << endl;
-		}
-		cout << endl;
-		cout << ">> Factors" << endl;
-		for (auto pf : factors) {
-			cout << *pf << endl;
-		}
+		cout << *model << endl;
 	}
+
+	delete model;
 
 	return 0;
 }
