@@ -1,6 +1,7 @@
 #include "factor.hh"
 
 #include <iostream>
+#include <iomanip>
 using namespace std;
 
 namespace bn {
@@ -131,7 +132,7 @@ operator<<(ostream &os, const Factor &f)
         for (int j = 0; j < width; ++j) {
             os << valuation[j] << " ";
         }
-        os << ": " << f[i] << endl;
+        os << ": " << fixed << setprecision(5) << f[i] << endl;
         domain->next_valuation(valuation);
     }
 
