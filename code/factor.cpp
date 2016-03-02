@@ -47,6 +47,36 @@ Factor::operator[](unsigned i)
     else throw "Factor::operator[]: Index out of range.";
 }
 
+Factor
+Factor::product(const Factor &f) const
+{
+    const Domain *d1 = this->_domain;
+    const Domain *d2 = f._domain;
+
+    Domain *new_domain = new Domain(*d1, *d2);
+    unsigned width = new_domain->width();
+    unsigned size = new_domain->size();
+    Factor new_factor(new_domain, 0.0);
+
+    vector<unsigned> valuation(width, 0);
+    double partition = 0;
+    for (unsigned i = 0; i < size; ++i) {
+        // find position in linearization of consistent valuation
+        unsigned pos1 = d1->position_consistent_valuation(valuation, *new_domain);
+        unsigned pos2 = d2->position_consistent_valuation(valuation, *new_domain);
+
+        // set product factor value
+        double value = (*this)[pos1] * f[pos2];
+        new_factor[i] = value;
+        partition += value;
+
+        // find next valuation
+        new_domain->next_valuation(valuation);
+    }
+    new_factor._partition = partition;
+    return new_factor;
+}
+
 ostream&
 operator<<(ostream &os, const Factor &f)
 {

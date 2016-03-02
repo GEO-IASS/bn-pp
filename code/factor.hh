@@ -23,6 +23,8 @@ public:
 
     void partition(double p) { _partition = p; }
 
+    Factor product(const Factor &f) const;
+
     friend std::ostream &operator<<(std::ostream &os, const Factor &f);
 
 private:
