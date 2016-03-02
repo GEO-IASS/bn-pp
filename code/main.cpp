@@ -38,6 +38,8 @@ main(int argc, char *argv[])
 
 	if (options["verbose"]) {
 		cout << *model << endl;
+		cout << ">> Full joint distribution" << endl;
+		cout << model->joint_distribution() << endl;
 	}
 
 	delete model;

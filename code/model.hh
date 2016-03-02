@@ -14,6 +14,8 @@ public:
 	BN(std::string name, std::vector<Variable*> &variables, std::vector<Factor*> &factors);
 	~BN();
 
+	Factor joint_distribution();
+
 	friend std::ostream &operator<<(std::ostream &os, const BN &bn);
 
 private:

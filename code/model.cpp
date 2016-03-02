@@ -9,7 +9,6 @@ BN::BN(string name, vector<Variable*> &variables, vector<Factor*> &factors) :
 	_variables(variables),
 	_factors(factors)
 {
-
 }
 
 BN::~BN()
@@ -20,6 +19,16 @@ BN::~BN()
 	for (auto pf : _factors) {
 		delete pf;
 	}
+}
+
+Factor
+BN::joint_distribution()
+{
+	Factor f(1.0);
+	for (auto pf : _factors) {
+		f *= *pf;
+	}
+	return f;
 }
 
 ostream&
