@@ -69,31 +69,33 @@ read_factors(ifstream &input_file, unsigned model_order, vector<Variable*> &vari
     read_next_integer(input_file, order);
     assert(order == model_order);
 
-    unsigned width, id;
+    vector<Domain*> domains;
     for (unsigned i = 0; i < order; ++i) {
+        unsigned width;
         read_next_integer(input_file, width);
 
         vector<const Variable*> scope;
         for (unsigned j = 0; j < width; ++j) {
+            unsigned id;
             read_next_integer(input_file, id);
             scope.push_back(variables[id]);
         }
-
-        factors.push_back(new Factor(new Domain(scope)));
+        domains.push_back(new Domain(scope));
     }
 
     for (unsigned i = 0; i < order; ++i) {
         unsigned factor_size;
         read_next_integer(input_file, factor_size);
 
+        vector<double> values;
         double partition = 0;
         for (unsigned j = 0; j < factor_size; ++j) {
             double value;
             read_next_double(input_file, value);
-            (*(factors[i]))[j] = value;
+            values.push_back(value);
             partition += value;
         }
-        factors[i]->partition(partition);
+        factors.push_back(new Factor(domains[i], values, partition));
     }
 }
 

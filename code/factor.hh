@@ -9,7 +9,7 @@ namespace bn {
 
 class Factor {
 public:
-    Factor(const Domain *domain, double value = 1.0);
+    Factor(const Domain *domain, std::vector<double> values, double partition);
     Factor(double value = 1.0);
     Factor(Factor &&f);
     ~Factor();
@@ -23,9 +23,6 @@ public:
     double partition() const { return _partition; }
 
     const double &operator[](unsigned i) const;
-    double &operator[](unsigned i);
-
-    void partition(double p) { _partition = p; }
 
     Factor product(const Factor &f) const;
 
