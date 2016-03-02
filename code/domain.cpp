@@ -54,6 +54,20 @@ Domain::operator[](unsigned i) const
     else throw "Domain::operator[unsigned i]: Index out of range!";
 }
 
+bool
+Domain::in_scope(const Variable* v) const
+{
+    unordered_map<unsigned,unsigned>::const_iterator it = _var_to_index.find(v->id());
+    return (it != _var_to_index.end());
+}
+
+bool
+Domain::in_scope(unsigned id) const
+{
+    unordered_map<unsigned,unsigned>::const_iterator it = _var_to_index.find(id);
+    return (it != _var_to_index.end());
+}
+
 void
 Domain::next_valuation(vector<unsigned> &valuation) const
 {
@@ -63,6 +77,25 @@ Domain::next_valuation(vector<unsigned> &valuation) const
     }
     if (j >= 0) {
         valuation[j]++;
+    }
+}
+
+unsigned
+Domain::position_consistent_valuation(vector<unsigned> valuation, const Domain &domain) const
+{
+    if (_width == 0) { return 0; }
+    else {
+        unsigned pos = 0;
+        unsigned index = 0;
+        for (auto v : _scope) {
+            unordered_map<unsigned,unsigned>::const_iterator it_index = _var_to_index.find(v->id());
+            unordered_map<unsigned,unsigned>::const_iterator it_index2 = domain._var_to_index.find(v->id());
+            if (it_index != _var_to_index.end() && it_index2 != _var_to_index.end()) {
+                pos +=  _offset[it_index->second] * valuation[it_index2->second];
+            }
+            index++;
+        }
+        return pos;
     }
 }
 

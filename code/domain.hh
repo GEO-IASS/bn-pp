@@ -19,7 +19,11 @@ public:
 
     const Variable *operator[](unsigned i) const;
 
+    bool in_scope(const Variable* v) const;
+    bool in_scope(unsigned id) const;
+
     void next_valuation(std::vector<unsigned> &valuation) const;
+    unsigned position_consistent_valuation(std::vector<unsigned> valuation, const Domain &domain) const;
 
     friend std::ostream &operator<<(std::ostream &o, const Domain &v);
 
