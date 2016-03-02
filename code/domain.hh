@@ -10,7 +10,9 @@ namespace bn {
 
 class Domain {
 public:
+    Domain();
     Domain(std::vector<const Variable*> scope);
+    Domain(const Domain &d1, const Domain &d2);
 
     unsigned width() const { return _width; };
     unsigned size()  const { return _size;  };

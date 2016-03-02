@@ -5,10 +5,27 @@ using namespace std;
 
 namespace bn {
 
-Factor::Factor(const Domain *domain) : _values(vector<double>(domain->size()))
+Factor::Factor(const Domain *domain, double value) : _values(vector<double>(domain->size()))
 {
 	_domain = domain;
-	_partition = 0.0;
+	_partition = domain->size() * value;
+}
+
+Factor::Factor(double value) :
+    _domain(new Domain()),
+    _values(vector<double>(1, value)),
+    _partition(value)
+{
+}
+
+Factor::Factor(Factor &&f)
+{
+    _domain = f._domain;
+    _values = f._values;
+    _partition = f._partition;
+    f._domain = nullptr;
+    f._values.clear();
+    f._partition = 0.0;
 }
 
 Factor::~Factor()

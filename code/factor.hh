@@ -9,7 +9,9 @@ namespace bn {
 
 class Factor {
 public:
-    Factor(const Domain *domain);
+    Factor(const Domain *domain, double value = 1.0);
+    Factor(double value = 1.0);
+    Factor(Factor &&f);
     ~Factor();
 
     unsigned size()    const { return _domain->size();  }
