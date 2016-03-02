@@ -14,6 +14,10 @@ public:
     Factor(Factor &&f);
     ~Factor();
 
+    Factor &operator=(Factor &&f);
+    Factor operator*(const Factor &f);
+    void operator*=(const Factor &f);
+
     unsigned size()    const { return _domain->size();  }
     unsigned width()   const { return _domain->width(); }
     double partition() const { return _partition; }

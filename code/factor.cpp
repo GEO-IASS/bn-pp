@@ -33,6 +33,35 @@ Factor::~Factor()
 	delete _domain;
 }
 
+
+Factor&
+Factor::operator=(Factor &&f)
+{
+    if (this != &f) {
+        delete _domain;
+        _values.clear();
+        _domain = f._domain;
+        _values = f._values;
+        _partition = f._partition;
+        f._domain = nullptr;
+        f._values.clear();
+        f._partition = 0.0;
+    }
+    return *this;
+}
+
+Factor
+Factor::operator*(const Factor &f)
+{
+    return product(f);
+}
+
+void
+Factor::operator*=(const Factor &f)
+{
+    *this = product(f);
+}
+
 const double&
 Factor::operator[](unsigned i) const
 {
