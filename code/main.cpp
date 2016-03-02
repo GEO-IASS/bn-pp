@@ -38,9 +38,12 @@ main(int argc, char *argv[])
 	read_uai_model(filename, order, variables, factors);
 
 	if (options["verbose"]) {
+		cout << ">> Variables" << endl;
 		for (auto pv : variables) {
 			cout << *pv << endl;
 		}
+		cout << endl;
+		cout << ">> Factors" << endl;
 		for (auto pf : factors) {
 			cout << *pf << endl;
 		}

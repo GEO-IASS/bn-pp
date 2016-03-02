@@ -35,8 +35,23 @@ operator<<(ostream &os, const Factor &f)
     os << "Factor(";
     os << "width:" << width << ", ";
     os << "size:" << size << ", ";
-    os << "partition:" << f.partition() << ", ";
-    os << *domain << ")";
+    os << "partition:" << f.partition() << ")" << endl;
+
+    // scope
+    for (int i = 0; i < width; ++i) {
+        os << (*domain)[i]->id() << " ";
+    }
+    os << endl;
+
+    // values
+    vector<unsigned> valuation(width, 0);
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < width; ++j) {
+            os << valuation[j] << " ";
+        }
+        os << ": " << f[i] << endl;
+        domain->next_valuation(valuation);
+    }
 
     return os;
 }
