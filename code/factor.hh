@@ -10,7 +10,7 @@ namespace bn {
 class Factor {
 public:
     Factor(const Domain *domain, std::vector<double> values, double partition);
-    Factor(const Domain *domain, double value);
+    Factor(const Domain *domain, double value = 0.0);
     Factor(double value = 1.0);
     Factor(const Factor &f);
     Factor(Factor &&f);
@@ -29,6 +29,7 @@ public:
 
     Factor sum_out(const Variable *variable) const;
     Factor product(const Factor &f) const;
+    Factor conditioning(const std::unordered_map<unsigned,unsigned> &evidence) const;
 
     friend std::ostream &operator<<(std::ostream &os, const Factor &f);
 

@@ -71,6 +71,24 @@ Domain::Domain(const Domain &d, const Variable *v)
     }
 }
 
+Domain::Domain(const Domain &d, const unordered_map<unsigned,unsigned> &evidence)
+{
+    for (auto it_scope : d._scope) {
+        const Variable *variable = it_scope;
+        if (!evidence.count(variable->id())) {
+            _scope.push_back(variable);
+        }
+    }
+    _width = _scope.size();
+    _size = 1;
+    _offset.reserve(_width);
+    for (int i = _width-1; i >= 0; --i) {
+        _offset[i] = _size;
+        _size *= _scope[i]->size();
+        _var_to_index[_scope[i]->id()] = i;
+    }
+}
+
 const Variable*
 Domain::operator[](unsigned i) const
 {
@@ -102,6 +120,43 @@ Domain::next_valuation(vector<unsigned> &valuation) const
     if (j >= 0) {
         valuation[j]++;
     }
+}
+
+void
+Domain::next_valuation_with_evidence(vector<unsigned> &valuation, const unordered_map<unsigned,unsigned> &evidence) const
+{
+    int j;
+    for (j = valuation.size()-1; j >= 0 && (evidence.count(_scope[j]->id()) || valuation[j] == _scope[j]->size()-1); --j) {
+        if (evidence.count(_scope[j]->id())) continue;
+        valuation[j] = 0;
+    }
+    if (j >= 0) {
+        valuation[j]++;
+    }
+}
+
+void
+Domain::update_valuation_with_evidence(vector<unsigned> &valuation, const unordered_map<unsigned,unsigned> &evidence) const {
+    if (_width == 0) return;
+    for (auto it_evidence : evidence) {
+        unsigned id = it_evidence.first;
+        unsigned value = it_evidence.second;
+
+        unordered_map<unsigned,unsigned>::const_iterator it_index = _var_to_index.find(id);
+        if (it_index != _var_to_index.end()) {
+            valuation[it_index->second] = value;
+        }
+    }
+}
+
+unsigned
+Domain::position_valuation(vector<unsigned> valuation) const
+{
+    unsigned pos = 0;
+    for (int i = _width-1; i >= 0; --i) {
+        pos += valuation[i] * _offset[i];
+    }
+    return pos;
 }
 
 unsigned

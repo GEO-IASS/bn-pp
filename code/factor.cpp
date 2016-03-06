@@ -6,7 +6,7 @@ using namespace std;
 
 namespace bn {
 
-Factor::Factor(const Domain *domain, std::vector<double> values, double partition) : _values(values)
+Factor::Factor(const Domain *domain, vector<double> values, double partition) : _values(values)
 {
     _domain = domain;
     _partition = partition;
@@ -153,6 +153,36 @@ Factor::sum_out(const Variable *variable) const
 
         return new_factor;
     }
+}
+
+Factor
+Factor::conditioning(const unordered_map<unsigned,unsigned> &evidence) const
+{
+    const Domain *d = _domain;
+    unsigned width = d->width();
+
+    Factor new_factor(new Domain(*d, evidence));
+
+    // incorporate evidence in instantiation
+    vector<unsigned> valuation(width, 0);
+    d->update_valuation_with_evidence(valuation, evidence);
+
+    double partition = 0;
+    unsigned new_factor_size = new_factor.size();
+    for (unsigned i = 0; i < new_factor_size; ++i) {
+
+        // update new factor
+        unsigned pos = d->position_valuation(valuation);
+        double value = (*this)[pos];
+        new_factor[i] = value;
+        partition += value;
+
+        // find next valuation
+        d->next_valuation_with_evidence(valuation, evidence);
+    }
+    new_factor._partition = partition;
+
+    return new_factor;
 }
 
 ostream&

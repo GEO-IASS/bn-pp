@@ -14,7 +14,8 @@ public:
     Domain(std::vector<const Variable*> scope);
     Domain(const Domain &d);
     Domain(const Domain &d1, const Domain &d2);
-    Domain(const Domain &d, const Variable *variable);
+    Domain(const Domain &d, const Variable *v);
+    Domain(const Domain &d, const std::unordered_map<unsigned,unsigned> &evidence);
 
     unsigned width() const { return _width; };
     unsigned size()  const { return _size;  };
@@ -25,6 +26,10 @@ public:
     bool in_scope(unsigned id) const;
 
     void next_valuation(std::vector<unsigned> &valuation) const;
+    void next_valuation_with_evidence(std::vector<unsigned> &valuation, const std::unordered_map<unsigned,unsigned> &evidence) const;
+    void update_valuation_with_evidence(std::vector<unsigned> &valuation, const std::unordered_map<unsigned,unsigned> &evidence) const;
+
+    unsigned position_valuation(std::vector<unsigned> valuation) const;
     unsigned position_consistent_valuation(std::vector<unsigned> valuation, const Domain &domain) const;
     unsigned position_consistent_valuation(std::vector<unsigned> valuation, const Domain &domain, const Variable *v, unsigned value) const;
 
