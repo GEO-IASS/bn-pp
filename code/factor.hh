@@ -29,6 +29,7 @@ public:
 
     Factor sum_out(const Variable *variable) const;
     Factor product(const Factor &f) const;
+    Factor divide(const Factor &f) const;
     Factor conditioning(const std::unordered_map<unsigned,unsigned> &evidence) const;
     Factor normalize() const;
 

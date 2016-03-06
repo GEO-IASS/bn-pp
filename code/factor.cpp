@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <cassert>
 using namespace std;
 
 namespace bn {
@@ -112,6 +113,39 @@ Factor::product(const Factor &f) const
 
         // set product factor value
         double value = (*this)[pos1] * f[pos2];
+        values.push_back(value);
+        partition += value;
+
+        // find next valuation
+        new_domain->next_valuation(valuation);
+    }
+
+    Factor new_factor(new_domain, values, partition);
+    return new_factor;
+}
+
+Factor
+Factor::divide(const Factor &f) const
+{
+    const Domain *d1 = this->_domain;
+    const Domain *d2 = f._domain;
+
+    Domain *new_domain = new Domain(*d1, *d2);
+    unsigned width = new_domain->width();
+    unsigned size = new_domain->size();
+
+    vector<unsigned> valuation(width, 0);
+
+    double partition = 0;
+    vector<double> values;
+    for (unsigned i = 0; i < size; ++i) {
+        // find position in linearization of consistent valuation
+        unsigned pos1 = d1->position_consistent_valuation(valuation, *new_domain);
+        unsigned pos2 = d2->position_consistent_valuation(valuation, *new_domain);
+
+        // set product factor value
+        assert(f[pos2] != 0);
+        double value = (*this)[pos1] / f[pos2];
         values.push_back(value);
         partition += value;
 
