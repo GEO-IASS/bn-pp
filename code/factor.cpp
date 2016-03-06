@@ -185,6 +185,19 @@ Factor::conditioning(const unordered_map<unsigned,unsigned> &evidence) const
     return new_factor;
 }
 
+Factor
+Factor::normalize() const {
+    Factor new_factor(*this);
+
+    unsigned sz = new_factor.size();
+    for (unsigned i = 0; i < sz; ++i) {
+        new_factor._values[i] = new_factor._values[i] / new_factor._partition;
+    }
+    new_factor._partition = 1.0;
+
+    return new_factor;
+}
+
 ostream&
 operator<<(ostream &os, const Factor &f)
 {
