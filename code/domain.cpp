@@ -25,6 +25,10 @@ Domain::Domain(vector<const Variable*> scope) : _scope(scope), _width(scope.size
     }
 }
 
+Domain::Domain(const Domain &d) : Domain(d._scope)
+{
+}
+
 Domain::Domain(const Domain &d1, const Domain &d2)
 {
     _scope = d1._scope;
@@ -43,6 +47,26 @@ Domain::Domain(const Domain &d1, const Domain &d2)
             _offset[i] = _size;
             _size *= _scope[i]->size();
             _var_to_index[_scope[i]->id()] = i;
+        }
+    }
+}
+
+Domain::Domain(const Domain &d, const Variable *v)
+{
+    for (unsigned i = 0; i < d._width; ++i) {
+        if (d._scope[i] != v) {
+            _scope.push_back(d._scope[i]);
+        }
+    }
+    _width = _scope.size();
+    _size = 1;
+    if (_width > 0) {
+        _offset.reserve(_width);
+        for (int i = _width-1; i >= 0; --i) {
+            const Variable *var = _scope[i];
+            _offset[i] = _size;
+            _size *= var->size();
+            _var_to_index[var->id()] = i;
         }
     }
 }
@@ -97,6 +121,17 @@ Domain::position_consistent_valuation(vector<unsigned> valuation, const Domain &
         }
         return pos;
     }
+}
+
+unsigned
+Domain::position_consistent_valuation(vector<unsigned> valuation, const Domain &domain, const Variable *v, unsigned value) const
+{
+    unsigned pos = position_consistent_valuation(valuation, domain);
+    unordered_map<unsigned,unsigned>::const_iterator it_index = _var_to_index.find(v->id());
+    if (it_index != _var_to_index.end()) {
+        pos += _offset[it_index->second] * value;
+    }
+    return pos;
 }
 
 ostream&

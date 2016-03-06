@@ -12,7 +12,9 @@ class Domain {
 public:
     Domain();
     Domain(std::vector<const Variable*> scope);
+    Domain(const Domain &d);
     Domain(const Domain &d1, const Domain &d2);
+    Domain(const Domain &d, const Variable *variable);
 
     unsigned width() const { return _width; };
     unsigned size()  const { return _size;  };
@@ -24,6 +26,7 @@ public:
 
     void next_valuation(std::vector<unsigned> &valuation) const;
     unsigned position_consistent_valuation(std::vector<unsigned> valuation, const Domain &domain) const;
+    unsigned position_consistent_valuation(std::vector<unsigned> valuation, const Domain &domain, const Variable *v, unsigned value) const;
 
     friend std::ostream &operator<<(std::ostream &o, const Domain &v);
 

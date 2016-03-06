@@ -12,10 +12,24 @@ Factor::Factor(const Domain *domain, std::vector<double> values, double partitio
     _partition = partition;
 }
 
+Factor::Factor(const Domain *domain, double value) :
+    _domain(new Domain(*domain)),
+    _values(vector<double>(domain->size(), value)),
+    _partition(domain->size() * value)
+{
+}
+
 Factor::Factor(double value) :
     _domain(new Domain()),
     _values(vector<double>(1, value)),
     _partition(value)
+{
+}
+
+Factor::Factor(const Factor &f) :
+    _domain(new Domain(*f._domain)),
+    _values(f._values),
+    _partition(f._partition)
 {
 }
 
@@ -70,6 +84,13 @@ Factor::operator[](unsigned i) const
     else throw "Factor::operator[]: Index out of range.";
 }
 
+double&
+Factor::operator[](unsigned i)
+{
+    if (i < size()) return _values[i];
+    else throw "Factor::operator[]: Index out of range.";
+}
+
 Factor
 Factor::product(const Factor &f) const
 {
@@ -100,6 +121,38 @@ Factor::product(const Factor &f) const
 
     Factor new_factor(new_domain, values, partition);
     return new_factor;
+}
+
+Factor
+Factor::sum_out(const Variable *variable) const
+{
+    if (!_domain->in_scope(variable)) {
+        Factor new_factor(*this);
+        return new_factor;
+    }
+    else {
+        Domain *new_domain = new Domain(*this->_domain, variable);
+        Factor new_factor(new_domain, 0.0);
+
+        unsigned factor_size = new_factor.size();
+        unsigned variable_size = variable->size();
+
+        double partition = 0;
+
+        vector<unsigned> valuation(new_factor.width(), 0);
+        for (unsigned i = 0; i < factor_size; ++i) {
+            for (unsigned val = 0; val < variable_size; ++val) {
+                unsigned pos = _domain->position_consistent_valuation(valuation, *new_domain, variable, val);
+                double value = (*this)[pos];
+                new_factor[i] += value;
+                partition += value;
+            }
+            new_domain->next_valuation(valuation);
+        }
+        new_factor._partition = partition;
+
+        return new_factor;
+    }
 }
 
 ostream&
