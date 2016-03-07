@@ -1,5 +1,7 @@
 #include "model.hh"
 
+#include <unordered_set>
+#include <iostream>
 using namespace std;
 
 namespace bn {
@@ -52,6 +54,44 @@ BN::query(std::vector<Variable*> &target, std::vector<Variable*> &evidence)
 	return joint_distribution();
 }
 
+void
+BN::markov_independence(const Variable* v) const
+{
+	unordered_set<unsigned> nd;
+	for (auto pv : _variables) {
+		nd.insert(pv->id());
+	}
+	nd.erase(nd.find(v->id()));
+
+	for (auto pv : _parents.find(v->id())->second) {
+		nd.erase(nd.find(pv->id()));
+	}
+	for (auto id : descendants(v)) {
+		nd.erase(nd.find(id));
+	}
+
+	cout << "descendants: " << *v << endl;
+	for (auto id : nd) {
+		cout << " " << id;
+	}
+	cout <<endl;
+}
+
+unordered_set<unsigned>
+BN::descendants(const Variable *v) const
+{
+	unordered_set<unsigned> desc;
+	if (!_children.find(v->id())->second.empty()) {
+		for (auto pv : _children.find(v->id())->second) {
+			desc.insert(pv->id());
+			for (auto d : descendants(pv)) {
+				desc.insert(d);
+			}
+		}
+	}
+	return desc;
+}
+
 ostream&
 operator<<(ostream &os, const BN &bn)
 {
@@ -70,6 +110,7 @@ operator<<(ostream &os, const BN &bn)
 			os << " " << pv2->id();
 		}
 		os << " }" << endl;
+		bn.markov_independence(pv1);
 	}
 	os << endl;
 	os << ">> Factors" << endl;

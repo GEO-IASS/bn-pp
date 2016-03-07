@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace bn {
 
@@ -18,6 +19,10 @@ public:
 	Factor joint_distribution();
 
 	Factor query(std::vector<Variable*> &target, std::vector<Variable*> &evidence);
+
+	void markov_independence(const Variable* v) const;
+
+	std::unordered_set<unsigned> descendants(const Variable *v) const;
 
 	friend std::ostream &operator<<(std::ostream &os, const BN &bn);
 
