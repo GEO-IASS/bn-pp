@@ -14,7 +14,7 @@ Factor::Factor(const Domain *domain, vector<double> values, double partition) : 
 }
 
 Factor::Factor(const Domain *domain, double value) :
-    _domain(new Domain(*domain)),
+    _domain(domain),
     _values(vector<double>(domain->size(), value)),
     _partition(domain->size() * value)
 {

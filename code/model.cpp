@@ -13,17 +13,17 @@ BN::BN(string name, vector<Variable*> &variables, vector<Factor*> &factors) :
 {
 	for (unsigned i = 0; i < _variables.size(); ++i) {
 		const Variable *v = _variables[i];
-		vector<const Variable*> children;
-		_children[v->id()] = children;
+		unordered_set<const Variable*> children;
+		_children[v] = children;
 	}
 
 	for (unsigned i = 0; i < _variables.size(); ++i) {
 		const Variable *v = _variables[i];
 		vector<const Variable*> scope = _factors[i]->domain().scope();
-		vector<const Variable*> parents(scope.begin()+1, scope.end());
-		_parents[v->id()] = parents;
+		unordered_set<const Variable*> parents(scope.begin()+1, scope.end());
+		_parents[v] = parents;
 		for (auto p : parents) {
-			_children[p->id()].push_back(v);
+			_children[p].insert(v);
 		}
 	}
 }
@@ -49,41 +49,53 @@ BN::joint_distribution()
 }
 
 Factor
-BN::query(std::vector<Variable*> &target, std::vector<Variable*> &evidence)
+BN::query(const unordered_set<const Variable*> &target, const unordered_set<const Variable*> &evidence)
 {
-	return joint_distribution();
+	static Factor joint = joint_distribution();
+
+	Factor f = joint;
+	for (auto pv : _variables) {
+		if (target.find(pv) == target.end() && evidence.find(pv) == evidence.end()) {
+			f = f.sum_out(pv);
+		}
+	}
+	if (!evidence.empty()) {
+		Factor g = joint;
+		for (auto pv : _variables) {
+			if (evidence.find(pv) == evidence.end()) {
+				g = g.sum_out(pv);
+			}
+		}
+		f = f.divide(g);
+	}
+	return f;
 }
 
-void
+unordered_set<const Variable*>
 BN::markov_independence(const Variable* v) const
 {
-	unordered_set<unsigned> nd;
+	unordered_set<const Variable*> nd;
 	for (auto pv : _variables) {
-		nd.insert(pv->id());
+		nd.insert(pv);
 	}
-	nd.erase(nd.find(v->id()));
+	nd.erase(nd.find(v));
 
-	for (auto pv : _parents.find(v->id())->second) {
-		nd.erase(nd.find(pv->id()));
+	for (auto pv : _parents.find(v)->second) {
+		nd.erase(nd.find(pv));
 	}
 	for (auto id : descendants(v)) {
 		nd.erase(nd.find(id));
 	}
-
-	cout << "descendants: " << *v << endl;
-	for (auto id : nd) {
-		cout << " " << id;
-	}
-	cout <<endl;
+	return nd;
 }
 
-unordered_set<unsigned>
+unordered_set<const Variable*>
 BN::descendants(const Variable *v) const
 {
-	unordered_set<unsigned> desc;
-	if (!_children.find(v->id())->second.empty()) {
-		for (auto pv : _children.find(v->id())->second) {
-			desc.insert(pv->id());
+	unordered_set<const Variable*> desc;
+	if (!_children.find(v)->second.empty()) {
+		for (auto pv : _children.find(v)->second) {
+			desc.insert(pv);
 			for (auto d : descendants(pv)) {
 				desc.insert(d);
 			}
@@ -97,8 +109,8 @@ operator<<(ostream &os, const BN &bn)
 {
 	os << ">> Variables" << endl;
 	for (auto pv1 : bn._variables) {
-		vector<const Variable*> parents = bn._parents.find(pv1->id())->second;
-		vector<const Variable*> children = bn._children.find(pv1->id())->second;
+		unordered_set<const Variable*> parents = bn._parents.find(pv1)->second;
+		unordered_set<const Variable*> children = bn._children.find(pv1)->second;
 		os << *pv1 << ", ";
 		os << "parents:{";
 		for (auto pv2 : parents) {

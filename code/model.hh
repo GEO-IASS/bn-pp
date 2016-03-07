@@ -16,13 +16,18 @@ public:
 	BN(std::string name, std::vector<Variable*> &variables, std::vector<Factor*> &factors);
 	~BN();
 
+	const std::vector<Variable*> &variables() const { return _variables; };
+	const std::vector<Factor*>   &factors()   const { return _factors;   };
+
+	const std::unordered_set<const Variable*> parents(const Variable *v)  const { return _parents.find(v)->second;  };
+	const std::unordered_set<const Variable*> children(const Variable *v) const { return _children.find(v)->second; };
+
 	Factor joint_distribution();
 
-	Factor query(std::vector<Variable*> &target, std::vector<Variable*> &evidence);
+	Factor query(const std::unordered_set<const Variable*> &target, const std::unordered_set<const Variable*> &evidence);
 
-	void markov_independence(const Variable* v) const;
-
-	std::unordered_set<unsigned> descendants(const Variable *v) const;
+	std::unordered_set<const Variable*> markov_independence(const Variable* v) const;
+	std::unordered_set<const Variable*> descendants(const Variable *v) const;
 
 	friend std::ostream &operator<<(std::ostream &os, const BN &bn);
 
@@ -30,8 +35,8 @@ private:
 	std::string _name;
 	std::vector<Variable*> _variables;
 	std::vector<Factor*> _factors;
-	std::unordered_map<unsigned,std::vector<const Variable*>> _parents;
-	std::unordered_map<unsigned,std::vector<const Variable*>> _children;
+	std::unordered_map<const Variable*,std::unordered_set<const Variable*>> _parents;
+	std::unordered_map<const Variable*,std::unordered_set<const Variable*>> _children;
 };
 
 }

@@ -5,11 +5,12 @@ using namespace bn;
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <regex>
 using namespace std;
 
 
 void
-usage(const char *filename);
+usage(const char *progname);
 
 void
 read_options(unordered_map<string,bool> &options,  int argc, char *argv[]);
@@ -24,7 +25,6 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	char *filename = argv[1];
 	unordered_map<string,bool> options;
 	read_options(options, argc, argv);
 	if (options["help"]) {
@@ -32,14 +32,24 @@ main(int argc, char *argv[])
 		return 0;
 	}
 
+	char *model_filename = argv[1];
 	unsigned order;
 	BN *model;
-	read_uai_model(filename, order, &model);
+	read_uai_model(model_filename, order, &model);
 
 	if (options["verbose"]) {
 		cout << *model << endl;
-		cout << ">> Full joint distribution" << endl;
-		cout << model->joint_distribution() << endl;
+		// cout << ">> Full joint distribution" << endl;
+		// cout << model->joint_distribution() << endl;
+
+		cout << ">> Markov independence" << endl;
+		for (auto pv : model->variables()) {
+			cout << *pv << endl;
+			unordered_set<const Variable*> target = model->markov_independence(pv);
+			target.insert(pv);
+			Factor f = model->query(target, model->parents(pv));
+			cout << f << endl << endl;
+		}
 	}
 
 	delete model;
@@ -48,9 +58,9 @@ main(int argc, char *argv[])
 }
 
 void
-usage(const char *filename)
+usage(const char *progname)
 {
-	cout << "usage: " << filename << " /path/to/model.uai [OPTIONS]" << endl << endl;
+	cout << "usage: " << progname << " /path/to/model.uai [OPTIONS]" << endl << endl;
 	cout << "OPTIONS:" << endl;
 	cout << "-h\tdisplay help information" << endl;
 	cout << "-v\tverbose" << endl;
