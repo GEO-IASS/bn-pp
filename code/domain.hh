@@ -17,6 +17,7 @@ public:
     Domain(const Domain &d, const Variable *v);
     Domain(const Domain &d, const std::unordered_map<unsigned,unsigned> &evidence);
 
+    std::vector<const Variable*> scope() const { return _scope; };
     unsigned width() const { return _width; };
     unsigned size()  const { return _size;  };
 

@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 namespace bn {
 
@@ -16,12 +17,16 @@ public:
 
 	Factor joint_distribution();
 
+	Factor query(std::vector<Variable*> &target, std::vector<Variable*> &evidence);
+
 	friend std::ostream &operator<<(std::ostream &os, const BN &bn);
 
 private:
 	std::string _name;
 	std::vector<Variable*> _variables;
 	std::vector<Factor*> _factors;
+	std::unordered_map<unsigned,std::vector<const Variable*>> _parents;
+	std::unordered_map<unsigned,std::vector<const Variable*>> _children;
 };
 
 }

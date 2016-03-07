@@ -20,6 +20,7 @@ public:
     Factor operator*(const Factor &f);
     void operator*=(const Factor &f);
 
+    const Domain &domain() const { return *_domain; }
     unsigned size()    const { return _domain->size();  }
     unsigned width()   const { return _domain->width(); }
     double partition() const { return _partition; }
