@@ -39,7 +39,7 @@ BN::~BN()
 }
 
 Factor
-BN::joint_distribution()
+BN::joint_distribution() const
 {
 	Factor f(1.0);
 	for (auto pf : _factors) {
@@ -49,7 +49,7 @@ BN::joint_distribution()
 }
 
 Factor
-BN::query(const unordered_set<const Variable*> &target, const unordered_set<const Variable*> &evidence)
+BN::query(const unordered_set<const Variable*> &target, const unordered_set<const Variable*> &evidence) const
 {
 	static Factor joint = joint_distribution();
 

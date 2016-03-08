@@ -22,9 +22,8 @@ public:
 	const std::unordered_set<const Variable*> parents(const Variable *v)  const { return _parents.find(v)->second;  };
 	const std::unordered_set<const Variable*> children(const Variable *v) const { return _children.find(v)->second; };
 
-	Factor joint_distribution();
-
-	Factor query(const std::unordered_set<const Variable*> &target, const std::unordered_set<const Variable*> &evidence);
+	Factor joint_distribution() const;
+	Factor query(const std::unordered_set<const Variable*> &target, const std::unordered_set<const Variable*> &evidence) const;
 
 	std::unordered_set<const Variable*> markov_independence(const Variable* v) const;
 	std::unordered_set<const Variable*> descendants(const Variable *v) const;
