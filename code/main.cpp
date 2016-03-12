@@ -17,10 +17,10 @@ void
 read_options(unordered_map<string,bool> &options,  int argc, char *argv[]);
 
 void
-prompt(const BN &model);
+prompt(const BN &model, bool verbose);
 
 void
-execute(const BN &model, string target, string evidence);
+execute(const BN &model, string target, string evidence, bool verbose);
 
 int
 main(int argc, char *argv[])
@@ -47,7 +47,7 @@ main(int argc, char *argv[])
 		cout << *model << endl;
 	}
 
-	prompt(*model);
+	prompt(*model, options["verbose"]);
 
 	delete model;
 
@@ -82,7 +82,7 @@ read_options(unordered_map<string,bool> &options, int argc, char *argv[])
 }
 
 void
-prompt(const BN &model)
+prompt(const BN &model, bool verbose)
 {
 	cout << ">> Query prompt:" << endl;
 	regex query_regex("query ([0-9](\\s*,\\s*[0-9])*)\\s*(\\|\\s*([0-9](\\s*,\\s*[0-9])*))?");
@@ -98,7 +98,8 @@ prompt(const BN &model)
 			target = regex_replace(target, whitespace_regex, "");
 			string evidence = str_match_result[4];
 			evidence = regex_replace(evidence, whitespace_regex, "");
-			execute(model, target, evidence);
+			cout << "P(" + target + "|" + evidence + ") =" << endl;
+			execute(model, target, evidence, verbose);
 		}
 		else if (regex_match(line, quit_regex)) {
 			break;
@@ -110,7 +111,7 @@ prompt(const BN &model)
 }
 
 void
-execute(const BN &model, string target, string evidence)
+execute(const BN &model, string target, string evidence, bool verbose)
 {
 	unordered_set<const Variable*> target_vars;
 	string var = "";
@@ -136,6 +137,8 @@ execute(const BN &model, string target, string evidence)
 		evidence_vars.insert(model.variables()[stoi(var)]);
 	}
 
-	Factor q = model.query(target_vars, evidence_vars);
-	cout << q << endl;
+	double uptime;
+	Factor q = model.query(target_vars, evidence_vars, uptime, verbose);
+	cout << q;
+	cout << ">> Executed in " << uptime << "ms." << endl << endl;
 }

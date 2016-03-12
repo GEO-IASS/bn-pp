@@ -2,6 +2,7 @@
 
 #include <unordered_set>
 #include <iostream>
+#include <chrono>
 using namespace std;
 
 namespace bn {
@@ -49,8 +50,12 @@ BN::joint_distribution() const
 }
 
 Factor
-BN::query(const unordered_set<const Variable*> &target, const unordered_set<const Variable*> &evidence, bool verbose) const
+BN::query(const unordered_set<const Variable*> &target, const unordered_set<const Variable*> &evidence, double &uptime, bool verbose) const
 {
+	auto start = chrono::steady_clock::now();
+
+	// Factor joint = joint_distribution();
+
 	unordered_set<const Variable*> Np, Ne, F;
 	bayes_ball(target, evidence, F, Np, Ne);
 
@@ -89,6 +94,11 @@ BN::query(const unordered_set<const Variable*> &target, const unordered_set<cons
 		}
 		f = f.divide(g);
 	}
+
+	auto end = chrono::steady_clock::now();
+	auto diff = end - start;
+	uptime = chrono::duration <double, milli> (diff).count();
+
 	return f;
 }
 
