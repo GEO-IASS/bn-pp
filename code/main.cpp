@@ -98,7 +98,12 @@ prompt(const BN &model, bool verbose)
 			target = regex_replace(target, whitespace_regex, "");
 			string evidence = str_match_result[4];
 			evidence = regex_replace(evidence, whitespace_regex, "");
-			cout << "P(" + target + "|" + evidence + ") =" << endl;
+			if (evidence != "") {
+				cout << "P(" + target + "|" + evidence + ") =" << endl;
+			}
+			else {
+				cout << "P(" + target + ") =" << endl;
+			}
 			execute(model, target, evidence, verbose);
 		}
 		else if (regex_match(line, quit_regex)) {
