@@ -49,9 +49,30 @@ BN::joint_distribution() const
 }
 
 Factor
-BN::query(const unordered_set<const Variable*> &target, const unordered_set<const Variable*> &evidence) const
+BN::query(const unordered_set<const Variable*> &target, const unordered_set<const Variable*> &evidence, bool verbose) const
 {
-	static Factor joint = joint_distribution();
+	unordered_set<const Variable*> Np, Ne, F;
+	bayes_ball(target, evidence, F, Np, Ne);
+
+	Factor joint(1.0);
+	for (auto const pv : Np) {
+		unsigned id = pv->id();
+		joint *= *_factors[id];
+	}
+
+	if (verbose) {
+		cout << ">> Requisite probability nodes Np:" << endl;
+		for (auto const pv : Np) {
+			cout << *pv << endl;
+		}
+		cout << endl;
+
+		cout << ">> Requisite observation nodes Ne" << endl;
+		for (auto const pv: Ne) {
+			cout << *pv << endl;
+		}
+		cout << endl;
+	}
 
 	Factor f = joint;
 	for (auto pv : _variables) {
@@ -69,6 +90,97 @@ BN::query(const unordered_set<const Variable*> &target, const unordered_set<cons
 		f = f.divide(g);
 	}
 	return f;
+}
+
+void
+BN::bayes_ball(const unordered_set<const Variable*> &J, const unordered_set<const Variable*> &K, const unordered_set<const Variable*> &F, unordered_set<const Variable*> &Np, unordered_set<const Variable*> &Ne) const
+{
+	// Initialize all nodes as neither visited, nor marked on the top, nor marked on the bottom.
+	unordered_set<const Variable*> visited, top, bottom;
+
+	// Create a schedule of nodes to be visited,
+	// initialized with each node in J to be visited as if from one of its children.
+	vector<const Variable*> schedule;
+	vector<bool> origin; // true if from children, false from parent
+	for (auto const j : J) {
+		schedule.push_back(j);
+		origin.push_back(true);
+	}
+
+	// While there are still nodes scheduled to be visited:
+	while (!schedule.empty()) {
+
+		// Pick any node j scheduled to be visited and remove it from the schedule.
+		// Either j was scheduled for a visit from a parent, a visit from a child, or both.
+		const Variable *j = schedule.back(); schedule.pop_back();
+		bool from_child = origin.back();  origin.pop_back();
+
+		// Mark j as visited.
+		visited.insert(j);
+
+		// If j not in K and the visit to j is from a child:
+		if (K.find(j) == K.end() && from_child) {
+
+			// if the top of j is not marked,
+			// then mark its top and schedule each of its parents to be visited;
+			if (top.find(j) == top.end()) {
+				top.insert(j);
+				unordered_set<const Variable*> parents = _parents.at(j);
+				for (auto const pa : parents) {
+					schedule.push_back(pa);
+					origin.push_back(true);
+				}
+			}
+
+			// if j not in F and the bottom of j is not marked,
+			// then mark its bottom and schedule each of its children to be visited.
+			if (F.find(j) == F.end() && bottom.find(j) == bottom.end()) {
+				bottom.insert(j);
+				unordered_set<const Variable*> children = _children.at(j);
+				for (auto const ch : children) {
+					schedule.push_back(ch);
+					origin.push_back(false);
+				}
+			}
+		}
+		// If the visit to j is from a parent:
+		else if (!from_child) {
+
+			// If j in K and the top of j is not marked,
+			// then mark its top and schedule each of its parents to be visited;
+			if (K.find(j) != K.end() && top.find(j) == top.end()) {
+				top.insert(j);
+				unordered_set<const Variable*> parents = _parents.at(j);
+				for (auto const pa : parents) {
+					schedule.push_back(pa);
+					origin.push_back(true);
+				}
+			}
+
+			// If j not in K and the bottom of j is not marked,
+			// then mark its bottom and schedule each of its children to be visited.
+			if (K.find(j) == K.end() && bottom.find(j) == bottom.end()) {
+				bottom.insert(j);
+				unordered_set<const Variable*> children = _children.at(j);
+				for (auto const ch : children) {
+					schedule.push_back(ch);
+					origin.push_back(false);
+				}
+			}
+		}
+	}
+
+	// The requisite probability nodes Np are those nodes marked on top.
+	for (auto const pv : top) {
+		Np.insert(pv);
+	}
+
+	// The requisite observation nodes Ne are those nodes in K marked as visited.
+	for (auto const pv : K) {
+		if (visited.find(pv) != visited.end()) {
+			Ne.insert(pv);
+		}
+	}
 }
 
 unordered_set<const Variable*>
