@@ -20,7 +20,10 @@ void
 prompt(const BN &model, bool verbose);
 
 void
-execute(const BN &model, string target, string evidence, bool verbose);
+parse_query(const BN &model, smatch result, string &target, string &evidence, unordered_set<const Variable*> &target_vars, unordered_set<const Variable*> &evidence_vars);
+
+void
+execute_query(const BN &model, smatch result, bool verbose);
 
 int
 main(int argc, char *argv[])
@@ -84,27 +87,18 @@ read_options(unordered_map<string,bool> &options, int argc, char *argv[])
 void
 prompt(const BN &model, bool verbose)
 {
-	cout << ">> Query prompt:" << endl;
-	regex query_regex("query ([0-9](\\s*,\\s*[0-9])*)\\s*(\\|\\s*([0-9](\\s*,\\s*[0-9])*))?");
-	regex whitespace_regex("\\s");
 	regex quit_regex("quit");
+	regex query_regex("query ([0-9]+(\\s*,\\s*[0-9]+)*)\\s*(\\|\\s*([0-9]+(\\s*,\\s*[0-9]+)*))?");
+
+	cout << ">> Query prompt:" << endl;
 	while (cin) {
-		string line;
-		std::smatch str_match_result;
 		cout << "? ";
+		string line;
 		getline(cin, line);
+
+		smatch str_match_result;
 		if (regex_match(line, str_match_result, query_regex)) {
-			string target = str_match_result[1];
-			target = regex_replace(target, whitespace_regex, "");
-			string evidence = str_match_result[4];
-			evidence = regex_replace(evidence, whitespace_regex, "");
-			if (evidence != "") {
-				cout << "P(" + target + "|" + evidence + ") =" << endl;
-			}
-			else {
-				cout << "P(" + target + ") =" << endl;
-			}
-			execute(model, target, evidence, verbose);
+			execute_query(model, str_match_result, verbose);
 		}
 		else if (regex_match(line, quit_regex)) {
 			break;
@@ -116,9 +110,17 @@ prompt(const BN &model, bool verbose)
 }
 
 void
-execute(const BN &model, string target, string evidence, bool verbose)
+parse_query(const BN &model,
+	smatch result, string &target, string &evidence,
+	unordered_set<const Variable*> &target_vars, unordered_set<const Variable*> &evidence_vars)
 {
-	unordered_set<const Variable*> target_vars;
+	regex whitespace_regex("\\s");
+
+	target = result[1];
+	target = regex_replace(target, whitespace_regex, "");
+	evidence = result[4];
+	evidence = regex_replace(evidence, whitespace_regex, "");
+
 	string var = "";
 	for (char& c: target) {
 		if (c != ',') var += c;
@@ -129,7 +131,6 @@ execute(const BN &model, string target, string evidence, bool verbose)
 	}
 	target_vars.insert(model.variables()[stoi(var)]);
 
-	unordered_set<const Variable*> evidence_vars;
 	if (evidence != "") {
 		var = "";
 		for (char& c: evidence) {
@@ -141,9 +142,25 @@ execute(const BN &model, string target, string evidence, bool verbose)
 		}
 		evidence_vars.insert(model.variables()[stoi(var)]);
 	}
+}
+
+void
+execute_query(const BN &model, smatch result, bool verbose)
+{
+	string target;
+	string evidence;
+	unordered_set<const Variable*> target_vars;
+	unordered_set<const Variable*> evidence_vars;
+	parse_query(model, result, target, evidence, target_vars, evidence_vars);
 
 	double uptime;
 	Factor q = model.query(target_vars, evidence_vars, uptime, verbose);
+	if (evidence != "") {
+		cout << "P(" + target + "|" + evidence + ") =" << endl;
+	}
+	else {
+		cout << "P(" + target + ") =" << endl;
+	}
 	cout << q;
 	cout << ">> Executed in " << uptime << "ms." << endl << endl;
 }
