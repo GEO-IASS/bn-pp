@@ -193,6 +193,88 @@ BN::bayes_ball(const unordered_set<const Variable*> &J, const unordered_set<cons
 	}
 }
 
+bool
+BN::m_separated(const Variable *v1, const Variable *v2, const unordered_set<const Variable*> evidence, bool verbose) const
+{
+	unordered_map<const Variable*,unordered_set<const Variable*>> graph;
+
+	// compute ancestor variables
+	unordered_set<const Variable*> vars(evidence);
+	vars.insert(v1);
+	vars.insert(v2);
+	unordered_set<const Variable*> all_ancestors = ancestors(vars);
+	for (auto const pv : vars) {
+		all_ancestors.insert(pv);
+	}
+
+	// initialization
+	for (auto const pv: all_ancestors) {
+		unordered_set<const Variable*> neighboors;
+		graph[pv] = neighboors;
+	}
+
+	// build sub-graph
+	for (auto const pv: all_ancestors) {
+		unordered_set<const Variable*> pa = _parents.find(pv)->second;
+		for (auto const p_pa : pa) {
+			graph[pv].insert(p_pa);
+			graph[p_pa].insert(pv);
+
+			// moralization
+			for (auto const p_pa2 : pa) {
+				if (p_pa != p_pa2) {
+					graph[p_pa].insert(p_pa2);
+					graph[p_pa2].insert(p_pa);
+				}
+			}
+		}
+	}
+
+	// remove evidence variables
+	for (auto const e : evidence) {
+		graph.erase(e);
+		for (auto it : graph) {
+			const Variable *v = it.first;
+			unordered_set<const Variable*> neighboors = it.second;
+			if (neighboors.find(e) != neighboors.end()) {
+				graph[v].erase(e);
+			}
+		}
+	}
+
+	if (verbose) {
+		cout << ">> Graph:" <<endl;
+		for (auto const it : graph) {
+			const Variable *v = it.first;
+			unordered_set<const Variable*> neighboors = it.second;
+			cout << "variable id=" << v->id() << ", neighboors={ ";
+			for (auto const pv : neighboors) {
+				cout << pv->id() << " ";
+			}
+			cout << "}" << endl;
+		}
+	}
+
+	// path search in graph
+	vector<const Variable*> stack;
+	unordered_set<const Variable*> visited;
+	stack.push_back(v1);
+	while (!stack.empty()) {
+		const Variable *v = stack.back(); stack.pop_back();
+		visited.insert(v);
+		if (v->id() == v2->id()) return false;
+		else {
+			unordered_set<const Variable*> neighboors = graph.find(v)->second;
+			for (auto const pn : neighboors) {
+				if (visited.find(pn) == visited.end()) {
+					stack.push_back(pn);
+				}
+			}
+		}
+	}
+	return true;
+}
+
 unordered_set<const Variable*>
 BN::markov_independence(const Variable* v) const
 {
@@ -225,6 +307,43 @@ BN::descendants(const Variable *v) const
 	}
 	return desc;
 }
+
+unordered_set<const Variable*>
+BN::ancestors(const Variable *v) const
+{
+	unordered_set<const Variable*> anc;
+	if (!_parents.find(v)->second.empty()) {
+		for (auto pv : _parents.find(v)->second) {
+			if (anc.find(pv) == anc.end()) {
+				anc.insert(pv);
+				for (auto d : ancestors(pv)) {
+					anc.insert(d);
+				}
+			}
+		}
+	}
+	return anc;
+}
+
+unordered_set<const Variable*>
+BN::ancestors(const unordered_set<const Variable*> &vars) const
+{
+	unordered_set<const Variable*> anc;
+	for (auto const v : vars) {
+		if (!_parents.find(v)->second.empty()) {
+			for (auto pv : _parents.find(v)->second) {
+				if (anc.find(pv) == anc.end()) {
+					anc.insert(pv);
+					for (auto d : ancestors(pv)) {
+						anc.insert(d);
+					}
+				}
+			}
+		}
+	}
+	return anc;
+}
+
 
 ostream&
 operator<<(ostream &os, const BN &bn)

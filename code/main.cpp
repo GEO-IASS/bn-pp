@@ -25,6 +25,12 @@ parse_query(const BN &model, smatch result, string &target, string &evidence, un
 void
 execute_query(const BN &model, smatch result, bool verbose);
 
+void
+parse_independence_assertion(const BN &model, smatch result, const Variable **var1, const Variable **var2, unordered_set<const Variable*> &evidence_vars);
+
+void
+check_independence_assertion(const BN &model, smatch result, bool verbose);
+
 int
 main(int argc, char *argv[])
 {
@@ -89,6 +95,7 @@ prompt(const BN &model, bool verbose)
 {
 	regex quit_regex("quit");
 	regex query_regex("query ([0-9]+(\\s*,\\s*[0-9]+)*)\\s*(\\|\\s*([0-9]+(\\s*,\\s*[0-9]+)*))?");
+	regex independence_regex("ind ([0-9]+)\\s*,\\s*([0-9]+)\\s*(\\|\\s*([0-9]+(\\s*,\\s*[0-9]+)*))?");
 
 	cout << ">> Query prompt:" << endl;
 	while (cin) {
@@ -99,6 +106,9 @@ prompt(const BN &model, bool verbose)
 		smatch str_match_result;
 		if (regex_match(line, str_match_result, query_regex)) {
 			execute_query(model, str_match_result, verbose);
+		}
+		else if (regex_match(line, str_match_result, independence_regex)) {
+			check_independence_assertion(model, str_match_result, verbose);
 		}
 		else if (regex_match(line, quit_regex)) {
 			break;
@@ -163,4 +173,42 @@ execute_query(const BN &model, smatch result, bool verbose)
 	}
 	cout << q;
 	cout << ">> Executed in " << uptime << "ms." << endl << endl;
+}
+
+
+void
+parse_independence_assertion(const BN &model, smatch result, const Variable **var1, const Variable **var2, unordered_set<const Variable*> &evidence_vars)
+{
+	regex whitespace_regex("\\s");
+
+	string id1 = result[1];
+	string id2 = result[2];
+
+	string evidence = result[4];
+	evidence = regex_replace(evidence, whitespace_regex, "");
+
+	*var1 = model.variables()[stoi(id1)];
+	*var2 = model.variables()[stoi(id2)];
+
+	if (evidence != "") {
+		string var = "";
+		for (char& c: evidence) {
+			if (c != ',') var += c;
+			else {
+				evidence_vars.insert(model.variables()[stoi(var)]);
+				var = "";
+			}
+		}
+		evidence_vars.insert(model.variables()[stoi(var)]);
+	}
+}
+
+void
+check_independence_assertion(const BN &model, smatch result, bool verbose)
+{
+	const Variable *var1;
+	const Variable *var2;
+	unordered_set<const Variable*> evidence;
+	parse_independence_assertion(model, result, &var1, &var2, evidence);
+	cout << (model.m_separated(var1, var2, evidence, verbose) ? "true" : "false") << endl;
 }
