@@ -17,19 +17,19 @@ void
 read_options(unordered_map<string,bool> &options,  int argc, char *argv[]);
 
 void
-prompt(const BN &model, bool verbose);
+prompt(const BN &model, unordered_map<string,bool> &options);
 
 void
 parse_query(const BN &model, smatch result, string &target, string &evidence, unordered_set<const Variable*> &target_vars, unordered_set<const Variable*> &evidence_vars);
 
 void
-execute_query(const BN &model, smatch result, bool verbose);
+execute_query(const BN &model, smatch result, unordered_map<string,bool> &options);
 
 void
 parse_independence_assertion(const BN &model, smatch result, const Variable **var1, const Variable **var2, unordered_set<const Variable*> &evidence_vars);
 
 void
-check_independence_assertion(const BN &model, smatch result, bool verbose);
+check_independence_assertion(const BN &model, smatch result, unordered_map<string,bool> &options);
 
 int
 main(int argc, char *argv[])
@@ -56,7 +56,7 @@ main(int argc, char *argv[])
 		cout << *model << endl;
 	}
 
-	prompt(*model, options["verbose"]);
+	prompt(*model, options);
 
 	delete model;
 
@@ -68,6 +68,7 @@ usage(const char *progname)
 {
 	cout << "usage: " << progname << " /path/to/model.uai [OPTIONS]" << endl << endl;
 	cout << "OPTIONS:" << endl;
+	cout << "-b\tsolve query using bayes-ball" << endl;
 	cout << "-h\tdisplay help information" << endl;
 	cout << "-v\tverbose" << endl;
 }
@@ -78,11 +79,15 @@ read_options(unordered_map<string,bool> &options, int argc, char *argv[])
 	// default options
 	options["verbose"] = false;
 	options["help"] = false;
+	options["bayes-ball"] = false;
 
 	for (int i = 2; i < argc; ++i) {
 		string option(argv[i]);
 		if (option == "-h") {
 			options["help"] = true;
+		}
+		else if (option == "-b") {
+			options["bayes-ball"] = true;
 		}
 		else if (option == "-v") {
 			options["verbose"] = true;
@@ -91,7 +96,7 @@ read_options(unordered_map<string,bool> &options, int argc, char *argv[])
 }
 
 void
-prompt(const BN &model, bool verbose)
+prompt(const BN &model, unordered_map<string,bool> &options)
 {
 	regex quit_regex("quit");
 	regex query_regex("query ([0-9]+(\\s*,\\s*[0-9]+)*)\\s*(\\|\\s*([0-9]+(\\s*,\\s*[0-9]+)*))?");
@@ -105,10 +110,10 @@ prompt(const BN &model, bool verbose)
 
 		smatch str_match_result;
 		if (regex_match(line, str_match_result, query_regex)) {
-			execute_query(model, str_match_result, verbose);
+			execute_query(model, str_match_result, options);
 		}
 		else if (regex_match(line, str_match_result, independence_regex)) {
-			check_independence_assertion(model, str_match_result, verbose);
+			check_independence_assertion(model, str_match_result, options);
 		}
 		else if (regex_match(line, quit_regex)) {
 			break;
@@ -155,7 +160,7 @@ parse_query(const BN &model,
 }
 
 void
-execute_query(const BN &model, smatch result, bool verbose)
+execute_query(const BN &model, smatch result, unordered_map<string,bool> &options)
 {
 	string target;
 	string evidence;
@@ -164,7 +169,7 @@ execute_query(const BN &model, smatch result, bool verbose)
 	parse_query(model, result, target, evidence, target_vars, evidence_vars);
 
 	double uptime;
-	Factor q = model.query(target_vars, evidence_vars, uptime, verbose);
+	Factor q = model.query(target_vars, evidence_vars, uptime, options);
 	if (evidence != "") {
 		cout << "P(" + target + "|" + evidence + ") =" << endl;
 	}
@@ -204,11 +209,11 @@ parse_independence_assertion(const BN &model, smatch result, const Variable **va
 }
 
 void
-check_independence_assertion(const BN &model, smatch result, bool verbose)
+check_independence_assertion(const BN &model, smatch result, unordered_map<string,bool> &options)
 {
 	const Variable *var1;
 	const Variable *var2;
 	unordered_set<const Variable*> evidence;
 	parse_independence_assertion(model, result, &var1, &var2, evidence);
-	cout << (model.m_separated(var1, var2, evidence, verbose) ? "true" : "false") << endl;
+	cout << (model.m_separated(var1, var2, evidence, options["verbose"]) ? "true" : "false") << endl;
 }

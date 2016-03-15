@@ -23,11 +23,23 @@ public:
 	const std::unordered_set<const Variable*> children(const Variable *v) const { return _children.find(v)->second; };
 
 	Factor joint_distribution() const;
-	Factor query(const std::unordered_set<const Variable*> &target, const std::unordered_set<const Variable*> &evidence, double &uptime, bool verbose=false) const;
+	Factor query(
+		const std::unordered_set<const Variable*> &target,
+		const std::unordered_set<const Variable*> &evidence,
+		double &uptime,
+		std::unordered_map<std::string,bool> &options) const;
 
-	void bayes_ball(const std::unordered_set<const Variable*> &J, const std::unordered_set<const Variable*> &K, const std::unordered_set<const Variable*> &F, std::unordered_set<const Variable*> &Np, std::unordered_set<const Variable*> &Ne) const;
+	void bayes_ball(
+		const std::unordered_set<const Variable*> &J,
+		const std::unordered_set<const Variable*> &K,
+		const std::unordered_set<const Variable*> &F,
+		std::unordered_set<const Variable*> &Np,
+		std::unordered_set<const Variable*> &Ne) const;
 
-	bool m_separated(const Variable *v1, const Variable *v2, const std::unordered_set<const Variable*> evidence, bool verbose=false) const;
+	bool m_separated(
+		const Variable *v1, const Variable *v2,
+		const std::unordered_set<const Variable*> evidence,
+		bool verbose=false) const;
 
 	std::unordered_set<const Variable*> markov_independence(const Variable* v) const;
 	std::unordered_set<const Variable*> descendants(const Variable *v) const;

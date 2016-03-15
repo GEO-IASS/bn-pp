@@ -50,33 +50,39 @@ BN::joint_distribution() const
 }
 
 Factor
-BN::query(const unordered_set<const Variable*> &target, const unordered_set<const Variable*> &evidence, double &uptime, bool verbose) const
+BN::query(
+	const unordered_set<const Variable*> &target,
+	const unordered_set<const Variable*> &evidence,
+	double &uptime,
+	unordered_map<string,bool> &options) const
 {
 	auto start = chrono::steady_clock::now();
 
-	// Factor joint = joint_distribution();
-
-	unordered_set<const Variable*> Np, Ne, F;
-	bayes_ball(target, evidence, F, Np, Ne);
-
 	Factor joint(1.0);
-	for (auto const pv : Np) {
-		unsigned id = pv->id();
-		joint *= *_factors[id];
-	}
-
-	if (verbose) {
-		cout << ">> Requisite probability nodes Np:" << endl;
+	if (options["bayes-ball"]) {
+		unordered_set<const Variable*> Np, Ne, F;
+		bayes_ball(target, evidence, F, Np, Ne);
 		for (auto const pv : Np) {
-			cout << *pv << endl;
+			unsigned id = pv->id();
+			joint *= *_factors[id];
 		}
-		cout << endl;
 
-		cout << ">> Requisite observation nodes Ne" << endl;
-		for (auto const pv: Ne) {
-			cout << *pv << endl;
+		if (options["verbose"]) {
+			cout << ">> Requisite probability nodes Np:" << endl;
+			for (auto const pv : Np) {
+				cout << *pv << endl;
+			}
+			cout << endl;
+
+			cout << ">> Requisite observation nodes Ne" << endl;
+			for (auto const pv: Ne) {
+				cout << *pv << endl;
+			}
+			cout << endl;
 		}
-		cout << endl;
+	}
+	else {
+		joint = joint_distribution();
 	}
 
 	Factor f = joint;
