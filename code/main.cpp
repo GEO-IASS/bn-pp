@@ -13,6 +13,8 @@ using namespace std;
 
 static unordered_map<string,bool> options;
 
+static unordered_map<unsigned,unsigned> evidence;
+
 class Prompt : public ModelVisitor {
 public:
     void dispatch(BN &bn);
@@ -63,12 +65,8 @@ main(int argc, char *argv[])
 	}
 
 	char *evidence_filename = argv[2];
-	unordered_map<unsigned,unsigned> evidence;
 	if (read_uai_evidence(evidence_filename, evidence)) {
 		return -2;
-	}
-	for (auto it : evidence) {
-		cout << "Var = " << it.first << ", Val = " << it.second << endl;
 	}
 
 	Prompt pmt;
@@ -115,7 +113,13 @@ void
 Prompt::dispatch(BN &model)
 {
 	if (options["verbose"]) {
+		cout << ">> Model:" << endl;
 		cout << model << endl;
+		cout << ">> Evidence:" << endl;
+		for (auto it : evidence) {
+			cout << "Variable = " << it.first << ", Value = " << it.second << endl;
+		}
+		cout << endl;
 	}
 
 	regex quit_regex("quit");
@@ -148,7 +152,13 @@ void
 Prompt::dispatch(MN &model)
 {
 	if (options["verbose"]) {
+		cout << ">> Model:" << endl;
 		cout << model << endl;
+		cout << ">> Evidence:" << endl;
+		for (auto it : evidence) {
+			cout << "Variable = " << it.first << ", Value = " << it.second << endl;
+		}
+		cout << endl;
 	}
 
 	regex quit_regex("quit");
@@ -270,5 +280,5 @@ check_independence_assertion(const BN &model, smatch result)
 void
 execute_partition(const MN &model)
 {
-	cout << "partition = " << log10(model.partition()) << endl;
+	cout << "partition = " << log10(model.partition(evidence)) << endl;
 }

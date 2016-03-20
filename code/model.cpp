@@ -416,9 +416,10 @@ MN::MN(string name, vector<Variable*> &variables, vector<Factor*> &factors) : Mo
 }
 
 double
-MN::partition() const
+MN::partition(const unordered_map<unsigned,unsigned> &evidence) const
 {
 	Factor f = joint_distribution();
+	f = f.conditioning(evidence);
 	return f.partition();
 }
 
