@@ -11,18 +11,36 @@
 
 namespace bn {
 
-class BN {
-public:
-	BN(std::string name, std::vector<Variable*> &variables, std::vector<Factor*> &factors);
-	~BN();
+class ModelVisitor;
 
+class Model {
+public:
+	Model(std::string name, std::vector<Variable*> &variables, std::vector<Factor*> &factors);
+	virtual ~Model();
+
+	const std::string name() const { return _name; };
 	const std::vector<Variable*> &variables() const { return _variables; };
 	const std::vector<Factor*>   &factors()   const { return _factors;   };
+
+	Factor joint_distribution() const;
+
+	virtual void write(std::ostream&) const = 0;
+
+	virtual void accept(ModelVisitor& v) = 0;
+
+protected:
+	std::string _name;
+	std::vector<Variable*> _variables;
+	std::vector<Factor*> _factors;
+};
+
+class BN : public Model {
+public:
+	BN(std::string name, std::vector<Variable*> &variables, std::vector<Factor*> &factors);
 
 	const std::unordered_set<const Variable*> parents(const Variable *v)  const { return _parents.find(v)->second;  };
 	const std::unordered_set<const Variable*> children(const Variable *v) const { return _children.find(v)->second; };
 
-	Factor joint_distribution() const;
 	Factor query(
 		const std::unordered_set<const Variable*> &target,
 		const std::unordered_set<const Variable*> &evidence,
@@ -47,14 +65,37 @@ public:
 	std::unordered_set<const Variable*> ancestors(const Variable *v) const;
 	std::unordered_set<const Variable*> ancestors(const std::unordered_set<const Variable*> &vars) const;
 
+	void write(std::ostream& os) const;
 	friend std::ostream &operator<<(std::ostream &os, const BN &bn);
 
+	virtual void accept(ModelVisitor& v);
+
 private:
-	std::string _name;
-	std::vector<Variable*> _variables;
-	std::vector<Factor*> _factors;
 	std::unordered_map<const Variable*,std::unordered_set<const Variable*>> _parents;
 	std::unordered_map<const Variable*,std::unordered_set<const Variable*>> _children;
+};
+
+class MN  : public Model {
+public:
+	MN(std::string name, std::vector<Variable*> &variables, std::vector<Factor*> &factors);
+
+	const std::unordered_set<const Variable*> neighbors(const Variable *v)  const { return _neighbors.find(v)->second;  };
+
+	double partition() const;
+
+	void write(std::ostream& os) const;
+	friend std::ostream &operator<<(std::ostream &os, const MN &bn);
+
+	virtual void accept(ModelVisitor& v);
+
+private:
+	std::unordered_map<const Variable*,std::unordered_set<const Variable*>> _neighbors;
+};
+
+class ModelVisitor {
+public:
+    virtual void dispatch(BN &bn) = 0;
+    virtual void dispatch(MN &mn) = 0;
 };
 
 }

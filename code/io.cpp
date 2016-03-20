@@ -45,8 +45,8 @@ read_file_header(ifstream &input_file)
 {
     string token;
     read_next_token(input_file, token);
-    if (token.compare("BAYES") != 0)  {
-        cerr << "ERROR! Expected 'BAYES' file header, found: " << token << endl;
+    if (token.compare("BAYES") != 0 && token.compare("MARKOV") != 0)  {
+        cerr << "ERROR! Expected 'BAYES' or 'MARKOV' file header, found: " << token << endl;
     }
     return token;
 }
@@ -63,11 +63,10 @@ read_variables(ifstream &input_file, unsigned &order, vector<Variable*> &variabl
 }
 
 void
-read_factors(ifstream &input_file, unsigned model_order, vector<Variable*> &variables, vector<Factor*> &factors)
+read_factors(ifstream &input_file, vector<Variable*> &variables, vector<Factor*> &factors)
 {
     unsigned order;
     read_next_integer(input_file, order);
-    assert(order == model_order);
 
     vector<Domain*> domains;
     for (unsigned i = 0; i < order; ++i) {
@@ -99,23 +98,28 @@ read_factors(ifstream &input_file, unsigned model_order, vector<Variable*> &vari
     }
 }
 
-int
-read_uai_model(const char *filename, unsigned &order, BN **model)
+string
+read_uai_model(const char *filename, unsigned &order, Model **model)
 {
     ifstream input_file(filename);
     if (input_file.is_open()) {
         vector<Variable*> variables;
         vector<Factor*> factors;
-        read_file_header(input_file);
+        string type = read_file_header(input_file);
         read_variables(input_file, order, variables);
-        read_factors(input_file, order, variables, factors);
-        *model = new BN(filename, variables, factors);
+        read_factors(input_file, variables, factors);
+        if (type == "BAYES") {
+            *model = new BN(filename, variables, factors);
+        }
+        if (type == "MARKOV") {
+            *model = new MN(filename, variables, factors);
+        }
         input_file.close();
-        return 0;
+        return type;
     }
     else {
         cerr << "Error: couldn't read file " << filename << endl;
-        return -1;
+        return "unknown";
     }
 }
 

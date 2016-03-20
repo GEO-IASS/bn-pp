@@ -7,29 +7,38 @@ using namespace bn;
 #include <vector>
 #include <unordered_map>
 #include <regex>
+#include <cmath>
 using namespace std;
 
+
+static unordered_map<string,bool> options;
+
+class Prompt : public ModelVisitor {
+public:
+    void dispatch(BN &bn);
+    void dispatch(MN &mn);
+};
 
 void
 usage(const char *progname);
 
 void
-read_options(unordered_map<string,bool> &options,  int argc, char *argv[]);
-
-void
-prompt(const BN &model, unordered_map<string,bool> &options);
+read_options(int argc, char *argv[]);
 
 void
 parse_query(const BN &model, smatch result, string &target, string &evidence, unordered_set<const Variable*> &target_vars, unordered_set<const Variable*> &evidence_vars);
 
 void
-execute_query(const BN &model, smatch result, unordered_map<string,bool> &options);
+execute_query(const BN &model, smatch result);
 
 void
 parse_independence_assertion(const BN &model, smatch result, const Variable **var1, const Variable **var2, unordered_set<const Variable*> &evidence_vars);
 
 void
-check_independence_assertion(const BN &model, smatch result, unordered_map<string,bool> &options);
+check_independence_assertion(const BN &model, smatch result);
+
+void
+execute_partition(const MN &model);
 
 int
 main(int argc, char *argv[])
@@ -40,8 +49,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	unordered_map<string,bool> options;
-	read_options(options, argc, argv);
+	read_options(argc, argv);
 	if (options["help"]) {
 		usage(progname);
 		return 0;
@@ -49,14 +57,12 @@ main(int argc, char *argv[])
 
 	char *model_filename = argv[1];
 	unsigned order;
-	BN *model;
-	read_uai_model(model_filename, order, &model);
-	if (options["verbose"]) {
-		cout << ">> Model:" << endl;
-		cout << *model << endl;
-	}
 
-	prompt(*model, options);
+	Model *model;
+	string type = read_uai_model(model_filename, order, &model);
+
+	Prompt pmt;
+	model->accept(pmt);
 
 	delete model;
 
@@ -74,7 +80,7 @@ usage(const char *progname)
 }
 
 void
-read_options(unordered_map<string,bool> &options, int argc, char *argv[])
+read_options(int argc, char *argv[])
 {
 	// default options
 	options["verbose"] = false;
@@ -96,8 +102,13 @@ read_options(unordered_map<string,bool> &options, int argc, char *argv[])
 }
 
 void
-prompt(const BN &model, unordered_map<string,bool> &options)
+Prompt::dispatch(BN &model)
 {
+	if (options["verbose"]) {
+		cout << ">> Model:" << endl;
+		cout << model << endl;
+	}
+
 	regex quit_regex("quit");
 	regex query_regex("query ([0-9]+(\\s*,\\s*[0-9]+)*)\\s*(\\|\\s*([0-9]+(\\s*,\\s*[0-9]+)*))?");
 	regex independence_regex("ind ([0-9]+)\\s*,\\s*([0-9]+)\\s*(\\|\\s*([0-9]+(\\s*,\\s*[0-9]+)*))?");
@@ -110,10 +121,40 @@ prompt(const BN &model, unordered_map<string,bool> &options)
 
 		smatch str_match_result;
 		if (regex_match(line, str_match_result, query_regex)) {
-			execute_query(model, str_match_result, options);
+			execute_query(model, str_match_result);
 		}
 		else if (regex_match(line, str_match_result, independence_regex)) {
-			check_independence_assertion(model, str_match_result, options);
+			check_independence_assertion(model, str_match_result);
+		}
+		else if (regex_match(line, quit_regex)) {
+			break;
+		}
+		else {
+			cout << "Error: not a valid query." << endl;
+		}
+	}
+}
+
+void
+Prompt::dispatch(MN &model)
+{
+	if (options["verbose"]) {
+		cout << ">> Model:" << endl;
+		cout << model << endl;
+	}
+
+	regex quit_regex("quit");
+	regex partition_regex("PR|pr|partition");
+
+	cout << ">> Query prompt:" << endl;
+	while (cin) {
+		cout << "? ";
+		string line;
+		getline(cin, line);
+
+		smatch str_match_result;
+		if (regex_match(line, partition_regex)) {
+			execute_partition(model);
 		}
 		else if (regex_match(line, quit_regex)) {
 			break;
@@ -160,7 +201,7 @@ parse_query(const BN &model,
 }
 
 void
-execute_query(const BN &model, smatch result, unordered_map<string,bool> &options)
+execute_query(const BN &model, smatch result)
 {
 	string target;
 	string evidence;
@@ -209,11 +250,17 @@ parse_independence_assertion(const BN &model, smatch result, const Variable **va
 }
 
 void
-check_independence_assertion(const BN &model, smatch result, unordered_map<string,bool> &options)
+check_independence_assertion(const BN &model, smatch result)
 {
 	const Variable *var1;
 	const Variable *var2;
 	unordered_set<const Variable*> evidence;
 	parse_independence_assertion(model, result, &var1, &var2, evidence);
 	cout << (model.m_separated(var1, var2, evidence, options["verbose"]) ? "true" : "false") << endl;
+}
+
+void
+execute_partition(const MN &model)
+{
+	cout << "partition = " << log10(model.partition()) << endl;
 }

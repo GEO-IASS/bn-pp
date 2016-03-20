@@ -7,15 +7,39 @@ using namespace std;
 
 namespace bn {
 
-BN::BN(string name, vector<Variable*> &variables, vector<Factor*> &factors) :
+Model::Model(string name, vector<Variable*> &variables, vector<Factor*> &factors) :
 	_name(name),
 	_variables(variables),
 	_factors(factors)
 {
-	for (unsigned i = 0; i < _variables.size(); ++i) {
-		const Variable *v = _variables[i];
+}
+
+Model::~Model()
+{
+	for (auto pv : _variables) {
+		delete pv;
+	}
+	for (auto pf : _factors) {
+		delete pf;
+	}
+}
+
+Factor
+Model::joint_distribution() const
+{
+	Factor f(1.0);
+	for (auto pf : _factors) {
+		f *= *pf;
+	}
+	return f;
+}
+
+
+BN::BN(string name, vector<Variable*> &variables, vector<Factor*> &factors) : Model(name, variables, factors)
+{
+	for (auto pv : _variables) {
 		unordered_set<const Variable*> children;
-		_children[v] = children;
+		_children[pv] = children;
 	}
 
 	for (unsigned i = 0; i < _variables.size(); ++i) {
@@ -29,25 +53,6 @@ BN::BN(string name, vector<Variable*> &variables, vector<Factor*> &factors) :
 	}
 }
 
-BN::~BN()
-{
-	for (auto pv : _variables) {
-		delete pv;
-	}
-	for (auto pf : _factors) {
-		delete pf;
-	}
-}
-
-Factor
-BN::joint_distribution() const
-{
-	Factor f(1.0);
-	for (auto pf : _factors) {
-		f *= *pf;
-	}
-	return f;
-}
 
 Factor
 BN::query(
@@ -350,14 +355,14 @@ BN::ancestors(const unordered_set<const Variable*> &vars) const
 	return anc;
 }
 
-
-ostream&
-operator<<(ostream &os, const BN &bn)
+void
+BN::write(ostream& os) const
 {
+	os << "BAYES:" << endl;
 	os << ">> Variables" << endl;
-	for (auto pv1 : bn._variables) {
-		unordered_set<const Variable*> parents = bn._parents.find(pv1)->second;
-		unordered_set<const Variable*> children = bn._children.find(pv1)->second;
+	for (auto pv1 : _variables) {
+		unordered_set<const Variable*> parents = _parents.find(pv1)->second;
+		unordered_set<const Variable*> children = _children.find(pv1)->second;
 		os << *pv1 << ", ";
 		os << "parents:{";
 		for (auto pv2 : parents) {
@@ -369,14 +374,85 @@ operator<<(ostream &os, const BN &bn)
 			os << " " << pv2->id();
 		}
 		os << " }" << endl;
-		bn.markov_independence(pv1);
+		markov_independence(pv1);
 	}
 	os << endl;
 	os << ">> Factors" << endl;
-	for (auto pf : bn._factors) {
+	for (auto pf : _factors) {
 		os << *pf << endl;
 	}
+}
+
+ostream&
+operator<<(ostream &os, const BN &bn)
+{
+	bn.write(os);
 	return os;
+}
+
+void
+BN::accept(ModelVisitor &v) {
+    v.dispatch(*this);
+}
+
+
+MN::MN(string name, vector<Variable*> &variables, vector<Factor*> &factors) : Model(name, variables, factors)
+{
+	for (auto pv : _variables) {
+		unordered_set<const Variable*> neighbors;
+		_neighbors[pv] = neighbors;
+	}
+
+	for (auto pf : _factors) {
+		vector<const Variable*> scope = pf->domain().scope();
+		for (auto pv1 : scope) {
+			for (auto pv2: scope) {
+				if (pv1->id() != pv2->id()) {
+					_neighbors[pv1].insert(pv2);
+				}
+			}
+		}
+	}
+}
+
+double
+MN::partition() const
+{
+	Factor f = joint_distribution();
+	return f.partition();
+}
+
+void
+MN::write(ostream& os) const
+{
+	os << "MARKOV:" << endl;
+	os << ">> Variables" << endl;
+	for (auto pv1 : _variables) {
+		unordered_set<const Variable*> neighbors = _neighbors.find(pv1)->second;
+		os << *pv1 << ", ";
+		os << "neighbors:{";
+		for (auto pv2 : neighbors) {
+			os << " " << pv2->id();
+		}
+		os << " }" << endl;
+	}
+	os << endl;
+	os << ">> Factors" << endl;
+	for (auto pf : _factors) {
+		os << *pf << endl;
+	}
+}
+
+ostream&
+operator<<(ostream &os, const MN &mn)
+{
+	mn.write(os);
+	return os;
+}
+
+void
+MN::accept(ModelVisitor &v) {
+    v.dispatch(*this);
 }
 
 }
