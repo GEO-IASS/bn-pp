@@ -56,10 +56,20 @@ main(int argc, char *argv[])
 	}
 
 	char *model_filename = argv[1];
-	unsigned order;
-
 	Model *model;
-	string type = read_uai_model(model_filename, order, &model);
+	string type;
+	if (read_uai_model(model_filename, type, &model)) {
+		return -1;
+	}
+
+	char *evidence_filename = argv[2];
+	unordered_map<unsigned,unsigned> evidence;
+	if (read_uai_evidence(evidence_filename, evidence)) {
+		return -2;
+	}
+	for (auto it : evidence) {
+		cout << "Var = " << it.first << ", Val = " << it.second << endl;
+	}
 
 	Prompt pmt;
 	model->accept(pmt);
@@ -72,7 +82,7 @@ main(int argc, char *argv[])
 void
 usage(const char *progname)
 {
-	cout << "usage: " << progname << " /path/to/model.uai [OPTIONS]" << endl << endl;
+	cout << "usage: " << progname << " /path/to/model.uai /path/to/evidence.evid [OPTIONS]" << endl << endl;
 	cout << "OPTIONS:" << endl;
 	cout << "-b\tsolve query using bayes-ball" << endl;
 	cout << "-h\tdisplay help information" << endl;
@@ -105,7 +115,6 @@ void
 Prompt::dispatch(BN &model)
 {
 	if (options["verbose"]) {
-		cout << ">> Model:" << endl;
 		cout << model << endl;
 	}
 
@@ -139,7 +148,6 @@ void
 Prompt::dispatch(MN &model)
 {
 	if (options["verbose"]) {
-		cout << ">> Model:" << endl;
 		cout << model << endl;
 	}
 

@@ -2,13 +2,17 @@
 #define _BN_IO_FILE_H_
 
 #include <string>
+#include <unordered_map>
 
 #include "model.hh"
 
 namespace bn {
 
-std::string
-read_uai_model(const char *filename, unsigned &order, Model **model);
+int
+read_uai_model(const char *filename, std::string &type, Model **model);
+
+int
+read_uai_evidence(const char *filename, std::unordered_map<unsigned,unsigned> &evidence);
 
 }
 

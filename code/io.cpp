@@ -52,8 +52,9 @@ read_file_header(ifstream &input_file)
 }
 
 void
-read_variables(ifstream &input_file, unsigned &order, vector<Variable*> &variables)
+read_variables(ifstream &input_file, vector<Variable*> &variables)
 {
+    unsigned order;
     read_next_integer(input_file, order);
     unsigned sz = 0;
     for (unsigned id = 0; id < order; ++id) {
@@ -98,15 +99,15 @@ read_factors(ifstream &input_file, vector<Variable*> &variables, vector<Factor*>
     }
 }
 
-string
-read_uai_model(const char *filename, unsigned &order, Model **model)
+int
+read_uai_model(const char *filename, string &type, Model **model)
 {
     ifstream input_file(filename);
     if (input_file.is_open()) {
         vector<Variable*> variables;
         vector<Factor*> factors;
-        string type = read_file_header(input_file);
-        read_variables(input_file, order, variables);
+        type = read_file_header(input_file);
+        read_variables(input_file, variables);
         read_factors(input_file, variables, factors);
         if (type == "BAYES") {
             *model = new BN(filename, variables, factors);
@@ -115,11 +116,37 @@ read_uai_model(const char *filename, unsigned &order, Model **model)
             *model = new MN(filename, variables, factors);
         }
         input_file.close();
-        return type;
+        return 0;
     }
     else {
         cerr << "Error: couldn't read file " << filename << endl;
-        return "unknown";
+        type = "unknown";
+        return -1;
+    }
+}
+
+int
+read_uai_evidence(const char *filename, std::unordered_map<unsigned,unsigned> &evidence)
+{
+    ifstream input_file(filename);
+    if (input_file.is_open()) {
+        unsigned n;
+        read_next_integer(input_file, n);
+        if (n == 1) {
+            unsigned size;
+            read_next_integer(input_file, size);
+            for (unsigned i = 0; i < size; ++i) {
+                unsigned id, val;
+                read_next_integer(input_file, id);
+                read_next_integer(input_file, val);
+                evidence[id] = val;
+            }
+        }
+        return 0;
+    }
+    else {
+        cerr << "Error: couldn't read file " << filename << endl;
+        return -1;
     }
 }
 
