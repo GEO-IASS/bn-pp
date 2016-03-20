@@ -42,6 +42,9 @@ check_independence_assertion(const BN &model, smatch result);
 void
 execute_partition(const MN &model);
 
+void
+execute_marginals(const MN &model);
+
 int
 main(int argc, char *argv[])
 {
@@ -163,6 +166,7 @@ Prompt::dispatch(MN &model)
 
 	regex quit_regex("quit");
 	regex partition_regex("PR|pr|partition");
+	regex marginals_regex("MAR|mar|marginals");
 
 	cout << ">> Query prompt:" << endl;
 	while (cin) {
@@ -173,6 +177,9 @@ Prompt::dispatch(MN &model)
 		smatch str_match_result;
 		if (regex_match(line, partition_regex)) {
 			execute_partition(model);
+		}
+		else if (regex_match(line, marginals_regex)) {
+			execute_marginals(model);
 		}
 		else if (regex_match(line, quit_regex)) {
 			break;
@@ -281,4 +288,15 @@ void
 execute_partition(const MN &model)
 {
 	cout << "partition = " << log10(model.partition(evidence)) << endl;
+}
+
+void
+execute_marginals(const MN &model)
+{
+	cout << ">> Marginals:" << endl;
+	vector<const Factor*> marginals = model.marginals(evidence);
+	for (auto pf : marginals) {
+		cout << *pf << endl;
+		delete pf;
+	}
 }

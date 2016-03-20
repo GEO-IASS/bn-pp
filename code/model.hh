@@ -82,6 +82,8 @@ public:
 	const std::unordered_set<const Variable*> neighbors(const Variable *v)  const { return _neighbors.find(v)->second;  };
 
 	double partition(const std::unordered_map<unsigned,unsigned> &evidence) const;
+	std::vector<const Factor*> marginals(const std::unordered_map<unsigned,unsigned> &evidence) const;
+	Factor marginal(const Variable *v, Factor &joint) const;
 
 	void write(std::ostream& os) const;
 	friend std::ostream &operator<<(std::ostream &os, const MN &bn);

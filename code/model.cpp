@@ -423,6 +423,31 @@ MN::partition(const unordered_map<unsigned,unsigned> &evidence) const
 	return f.partition();
 }
 
+vector<const Factor*>
+MN::marginals(const unordered_map<unsigned,unsigned> &evidence) const
+{
+	Factor joint = joint_distribution();
+	joint = joint.conditioning(evidence).normalize();
+
+	vector<const Factor*> marg;
+	for (auto pv : _variables) {
+		marg.push_back(new Factor(marginal(pv, joint)));
+	}
+	return marg;
+}
+
+Factor
+MN::marginal(const Variable *v, Factor &joint) const
+{
+	Factor f = joint;
+	for (auto pv : _variables) {
+		if (pv->id() != v->id()) {
+			f = f.sum_out(pv);
+		}
+	}
+	return f;
+}
+
 void
 MN::write(ostream& os) const
 {
