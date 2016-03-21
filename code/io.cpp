@@ -100,17 +100,44 @@ read_factors(ifstream &input_file, vector<Variable*> &variables, vector<Factor*>
 }
 
 int
-read_uai_model(const char *filename, string &type, Model **model)
+read_uai_model(const char *filename, BN **model)
 {
     ifstream input_file(filename);
     if (input_file.is_open()) {
         vector<Variable*> variables;
         vector<Factor*> factors;
-        type = read_file_header(input_file);
+        string type = read_file_header(input_file);
+        read_variables(input_file, variables);
+        read_factors(input_file, variables, factors);
+        if (type == "MARKOV") {
+            input_file.close();
+            return -2;
+        }
+        if (type == "BAYES") {
+            *model = new BN(filename, variables, factors);
+        }
+        input_file.close();
+        return 0;
+    }
+    else {
+        cerr << "Error: couldn't read file " << filename << endl;
+        return -1;
+    }
+}
+
+int
+read_uai_model(const char *filename, MN **model)
+{
+    ifstream input_file(filename);
+    if (input_file.is_open()) {
+        vector<Variable*> variables;
+        vector<Factor*> factors;
+        string type = read_file_header(input_file);
         read_variables(input_file, variables);
         read_factors(input_file, variables, factors);
         if (type == "BAYES") {
-            *model = new BN(filename, variables, factors);
+            input_file.close();
+            return -2;
         }
         if (type == "MARKOV") {
             *model = new MN(filename, variables, factors);
@@ -120,10 +147,10 @@ read_uai_model(const char *filename, string &type, Model **model)
     }
     else {
         cerr << "Error: couldn't read file " << filename << endl;
-        type = "unknown";
         return -1;
     }
 }
+
 
 int
 read_uai_evidence(const char *filename, std::unordered_map<unsigned,unsigned> &evidence)

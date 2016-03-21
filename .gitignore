@@ -3,3 +3,5 @@
 *.o
 bn
 bn.dSYM/
+mn
+mn.dSYM/

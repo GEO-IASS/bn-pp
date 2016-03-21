@@ -1,14 +1,20 @@
 CC=g++
 CXXFLAGS=-Wall -Wextra -ansi -pedantic -std=c++11 -g
 
-OBJ=variable.o domain.o factor.o model.o io.o main.o
+OBJ=variable.o domain.o factor.o model.o io.o
 
-all: bn
+all: bn mn
 
-bn: $(OBJ)
+bn: $(OBJ) bn.o
 	$(CC) $^ -o $@
 
-main.o: main.cpp
+bn.o: bn.cpp
+	$(CC) $(CXXFLAGS) -c $<
+
+mn: $(OBJ) mn.o
+	$(CC) $^ -o $@
+
+mn.o: mn.cpp
 	$(CC) $(CXXFLAGS) -c $<
 
 model.o: model.cpp model.hh
@@ -28,4 +34,4 @@ variable.o: variable.cpp variable.hh
 
 .PHONY: clean
 clean:
-	rm -rvf .DS_Store *~ bn bn.dSYM/ *.o
+	rm -rvf .DS_Store *~ bn bn.dSYM/ mn mn.dSYM/ *.o
