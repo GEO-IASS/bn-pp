@@ -8,6 +8,7 @@ using namespace bn;
 #include <unordered_map>
 #include <regex>
 #include <cmath>
+#include <chrono>
 using namespace std;
 
 
@@ -133,16 +134,25 @@ prompt()
 void
 execute_partition()
 {
-	cout << "partition = " << log10(model->partition(evidence)) << endl << endl;
+	auto start = chrono::steady_clock::now();
+	double p = log10(model->partition(evidence));
+	auto end = chrono::steady_clock::now();
+	auto diff = chrono::duration <double, milli> (end-start).count();
+	cout << "partition = " << p << endl << endl;
+	cout << ">> Executed in " << diff << "ms." << endl << endl;
 }
 
 void
 execute_marginals()
 {
 	cout << ">> Marginals:" << endl;
+	auto start = chrono::steady_clock::now();
 	vector<const Factor*> marginals = model->marginals(evidence);
+	auto end = chrono::steady_clock::now();
 	for (auto pf : marginals) {
 		cout << *pf << endl;
 		delete pf;
 	}
+	auto diff = chrono::duration <double, milli> (end-start).count();
+	cout << ">> Executed in " << diff << "ms." << endl << endl;
 }

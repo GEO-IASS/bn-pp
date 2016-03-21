@@ -390,11 +390,6 @@ operator<<(ostream &os, const BN &bn)
 	return os;
 }
 
-void
-BN::accept(ModelVisitor &v) {
-    v.dispatch(*this);
-}
-
 
 MN::MN(string name, vector<Variable*> &variables, vector<Factor*> &factors) : Model(name, variables, factors)
 {
@@ -474,11 +469,6 @@ operator<<(ostream &os, const MN &mn)
 {
 	mn.write(os);
 	return os;
-}
-
-void
-MN::accept(ModelVisitor &v) {
-    v.dispatch(*this);
 }
 
 }

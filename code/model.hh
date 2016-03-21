@@ -11,8 +11,6 @@
 
 namespace bn {
 
-class ModelVisitor;
-
 class Model {
 public:
 	Model(std::string name, std::vector<Variable*> &variables, std::vector<Factor*> &factors);
@@ -25,8 +23,6 @@ public:
 	Factor joint_distribution() const;
 
 	virtual void write(std::ostream&) const = 0;
-
-	virtual void accept(ModelVisitor& v) = 0;
 
 protected:
 	std::string _name;
@@ -68,8 +64,6 @@ public:
 	void write(std::ostream& os) const;
 	friend std::ostream &operator<<(std::ostream &os, const BN &bn);
 
-	virtual void accept(ModelVisitor& v);
-
 private:
 	std::unordered_map<const Variable*,std::unordered_set<const Variable*>> _parents;
 	std::unordered_map<const Variable*,std::unordered_set<const Variable*>> _children;
@@ -88,16 +82,8 @@ public:
 	void write(std::ostream& os) const;
 	friend std::ostream &operator<<(std::ostream &os, const MN &bn);
 
-	virtual void accept(ModelVisitor& v);
-
 private:
 	std::unordered_map<const Variable*,std::unordered_set<const Variable*>> _neighbors;
-};
-
-class ModelVisitor {
-public:
-    virtual void dispatch(BN &bn) = 0;
-    virtual void dispatch(MN &mn) = 0;
 };
 
 }
