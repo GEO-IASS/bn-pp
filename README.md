@@ -153,4 +153,4 @@ Factor(width:1, size:2, partition:1.00000)
 
 ## Input
 
-The input format is the uai model specification for BAYES network [UAI 2014 Inference Competition](http://www.hlt.utdallas.edu/~vgogate/uai14-competition/).
+The input format is the uai model specification for BAYES and MARKOV networks [UAI 2014 Inference Competition](http://www.hlt.utdallas.edu/~vgogate/uai14-competition/).
