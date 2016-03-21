@@ -10,6 +10,8 @@ $ make clean && make
 
 ## Usage
 
+### Bayes nets
+
 ```
 $ ./bn
 usage: ./bn /path/to/model.uai [OPTIONS]
@@ -35,7 +37,7 @@ $ ./bn ../models/asia.uai <../models/asia.ind
 To check variable dependencies of asia model
 
 ```
-./bn ../models/asia.uai <../models/asia.not.ind
+$ ./bn ../models/asia.uai <../models/asia.not.ind
 ```
 
 To execute queries or check (in)dependencies on the prompt
@@ -75,6 +77,78 @@ true
 false
 
 ? quit
+```
+
+### Markov nets
+
+```
+$ ./mn
+usage: ./mn /path/to/model.uai /path/to/evidence.evid [OPTIONS]
+
+OPTIONS:
+-h	display help information
+-v	verbose
+```
+
+To compute the partition function of a Markov network given evidence
+```
+$ ./mn ../models/grid3x3.uai ../models/grid3x3-PR.uai.evid
+
+>> Query prompt:
+? PR
+partition = 14.8899
+
+>> Executed in 22.5963ms.
+```
+
+To compute the all the marginals of a Markov network given evidence
+```
+>> Query prompt:
+? MAR
+>> Marginals:
+Factor(width:0, size:1, partition:1)
+
+: 1.00000
+
+Factor(width:1, size:2, partition:1.00000)
+1
+0 : 0.00011
+1 : 0.99989
+
+Factor(width:1, size:2, partition:1.00000)
+2
+0 : 0.17139
+1 : 0.82861
+
+Factor(width:0, size:1, partition:1.00000)
+
+: 1.00000
+
+Factor(width:0, size:1, partition:1.00000)
+
+: 1.00000
+
+Factor(width:1, size:2, partition:1.00000)
+5
+0 : 0.42988
+1 : 0.57012
+
+Factor(width:1, size:2, partition:1.00000)
+6
+0 : 0.99122
+1 : 0.00878
+
+Factor(width:1, size:2, partition:1.00000)
+7
+0 : 0.99995
+1 : 0.00005
+
+Factor(width:1, size:2, partition:1.00000)
+8
+0 : 0.57011
+1 : 0.42989
+
+>> Executed in 22.15187ms.
 ```
 
 ## Input
