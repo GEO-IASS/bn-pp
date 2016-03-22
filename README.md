@@ -98,7 +98,7 @@ $ ./mn ../models/grid3x3.uai ../models/grid3x3-PR.uai.evid
 ? PR
 partition = 14.8899
 
->> Executed in 22.5963ms.
+>> Executed in 1.3077ms.
 ```
 
 To compute the all the marginals of a Markov network given evidence
@@ -148,7 +148,7 @@ Factor(width:1, size:2, partition:1.00000)
 0 : 0.57011
 1 : 0.42989
 
->> Executed in 22.15187ms.
+>> Executed in 2.73007ms.
 ```
 
 ## Input

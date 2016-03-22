@@ -34,6 +34,16 @@ Model::joint_distribution() const
 	return f;
 }
 
+Factor
+Model::joint_distribution(const unordered_map<unsigned,unsigned> &evidence) const
+{
+	Factor f(1.0);
+	for (auto pf : _factors) {
+		f *= pf->conditioning(evidence);
+	}
+	return f;
+}
+
 
 BN::BN(string name, vector<Variable*> &variables, vector<Factor*> &factors) : Model(name, variables, factors)
 {
@@ -413,16 +423,14 @@ MN::MN(string name, vector<Variable*> &variables, vector<Factor*> &factors) : Mo
 double
 MN::partition(const unordered_map<unsigned,unsigned> &evidence) const
 {
-	Factor f = joint_distribution();
-	f = f.conditioning(evidence);
+	Factor f = joint_distribution(evidence);
 	return f.partition();
 }
 
 vector<const Factor*>
 MN::marginals(const unordered_map<unsigned,unsigned> &evidence) const
 {
-	Factor joint = joint_distribution();
-	joint = joint.conditioning(evidence).normalize();
+	Factor joint = joint_distribution(evidence).normalize();
 
 	vector<const Factor*> marg;
 	for (auto pv : _variables) {

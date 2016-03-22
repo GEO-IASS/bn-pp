@@ -21,6 +21,7 @@ public:
 	const std::vector<Factor*>   &factors()   const { return _factors;   };
 
 	Factor joint_distribution() const;
+	Factor joint_distribution(const std::unordered_map<unsigned,unsigned> &evidence) const;
 
 	virtual void write(std::ostream&) const = 0;
 
