@@ -103,6 +103,8 @@ partition = 14.8899
 
 To compute the all the marginals of a Markov network given evidence
 ```
+$ ./mn ../models/grid3x3.uai ../models/grid3x3-MAR.uai.evid
+
 >> Query prompt:
 ? MAR
 >> Marginals:
