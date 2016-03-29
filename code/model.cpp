@@ -107,11 +107,9 @@ BN::query(
 		}
 	}
 	if (!evidence.empty()) {
-		Factor g = joint;
-		for (auto pv : _variables) {
-			if (evidence.find(pv) == evidence.end()) {
-				g = g.sum_out(pv);
-			}
+		Factor g = f;
+		for (auto pv : target) {
+			g = g.sum_out(pv);
 		}
 		f = f.divide(g);
 	}
