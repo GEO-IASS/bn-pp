@@ -66,6 +66,8 @@ public:
 		const std::unordered_set<const Variable*> evidence,
 		bool verbose=false) const;
 
+	std::unordered_map<unsigned,unsigned> sampling() const;
+
 	std::unordered_set<const Variable*> markov_independence(const Variable* v) const;
 	std::unordered_set<const Variable*> descendants(const Variable *v) const;
 
@@ -78,6 +80,8 @@ public:
 private:
 	std::unordered_map<const Variable*,std::unordered_set<const Variable*>> _parents;
 	std::unordered_map<const Variable*,std::unordered_set<const Variable*>> _children;
+
+	std::vector<const Factor*> sampling_order() const;
 };
 
 class MN  : public Model {

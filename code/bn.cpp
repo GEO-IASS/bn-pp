@@ -30,6 +30,9 @@ execute_query(smatch result);
 void
 execute_independence_assertion(smatch result);
 
+void
+execute_sampling();
+
 
 int
 main(int argc, char *argv[])
@@ -106,6 +109,7 @@ prompt()
 	regex quit_regex("quit");
 	regex query_regex("query ([^\\|]+)\\s*(\\|\\s*(.*))?");
 	regex independence_regex("ind ([0-9]+)\\s*,\\s*([0-9]+)\\s*(\\|\\s*([0-9]+(\\s*,\\s*[0-9]+)*))?");
+	regex sample_regex("sample");
 
 	cout << ">> Query prompt:" << endl;
 	while (cin) {
@@ -119,6 +123,9 @@ prompt()
 		}
 		else if (regex_match(line, str_match_result, independence_regex)) {
 			execute_independence_assertion(str_match_result);
+		}
+		else if (regex_match(line, sample_regex)) {
+			execute_sampling();
 		}
 		else if (regex_match(line, quit_regex)) {
 			break;
@@ -180,4 +187,17 @@ execute_independence_assertion(smatch result)
 	}
 
 	cout << (model->m_separated(var1, var2, evidence_vars, options["verbose"]) ? "true" : "false") << endl << endl;
+}
+
+void
+execute_sampling()
+{
+	unordered_map<unsigned,unsigned> sample = model->sampling();
+	cout << "sample = " << endl;
+	for (auto it : sample) {
+		unsigned id = it.first;
+		unsigned val = it.second;
+		cout << id << " -> " << val << endl;
+	}
+	cout << endl;
 }

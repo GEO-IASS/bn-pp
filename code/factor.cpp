@@ -3,6 +3,8 @@
 #include <iostream>
 #include <iomanip>
 #include <cassert>
+#include <cmath>
+#include <random>
 using namespace std;
 
 namespace bn {
@@ -231,6 +233,41 @@ Factor::normalize() const {
 
     return new_factor;
 }
+
+unordered_map<unsigned,unsigned>
+Factor::sampling(const unordered_map<unsigned,unsigned> &evidence) const
+{
+    unordered_map<unsigned,unsigned> sample;
+
+    random_device rd;
+    double prob = rd();
+    prob /= rd.max();
+
+    Factor f = conditioning(evidence);
+    assert(fabs(f.partition() - 1.0) < 0.001);
+
+    const Domain &d = f.domain();
+    unsigned width = d.width();
+
+    // cout << f << endl;
+    // cout << "rand = " << prob << endl << endl;
+
+    vector<unsigned> valuation(width, 0);
+    unsigned f_size = f.size();
+    double p = 0.0;
+    for (unsigned i = 0; i < f_size; ++i) {
+        p += f[i];
+        if (prob <= p) break;
+        d.next_valuation(valuation);
+    }
+
+    for (unsigned i = 0; i < width; ++i) {
+        sample[d[i]->id()] = valuation[i];
+    }
+
+    return sample;
+}
+
 
 ostream&
 operator<<(ostream &os, const Factor &f)

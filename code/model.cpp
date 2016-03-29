@@ -334,6 +334,66 @@ BN::bayes_ball(const unordered_set<const Variable*> &J, const unordered_set<cons
 	}
 }
 
+vector<const Factor*>
+BN::sampling_order() const
+{
+	vector<const Factor*> order;
+
+	unordered_map<unsigned,unsigned> variables_to_sample;
+	for (auto pv : _variables) {
+		unsigned id = pv->id();
+		unsigned nparents = _parents.find(pv)->second.size();
+		variables_to_sample[id] = nparents;
+	}
+
+	while (!variables_to_sample.empty()) {
+		unordered_map<unsigned,unsigned> new_variables_to_sample;
+		unordered_set<unsigned> ready_to_sample;
+
+		for (auto it : variables_to_sample) {
+			unsigned id = it.first;
+			unsigned left_to_sample = it.second;
+			if (left_to_sample == 0) {
+				// cout << *_variables[id] << endl;
+				// cout << *_factors[id] << endl;
+				// cout << endl;
+				ready_to_sample.insert(id);
+				order.push_back(_factors[id]);
+			}
+			else {
+				new_variables_to_sample[id] = left_to_sample;
+			}
+		}
+
+		for (auto it : new_variables_to_sample) {
+			unsigned id = it.first;
+			for (auto id2 : ready_to_sample) {
+				if (_factors[id]->domain().in_scope(id2)) {
+					new_variables_to_sample[id]--;
+				}
+			}
+		}
+
+		variables_to_sample = new_variables_to_sample;
+	}
+
+	return order;
+}
+
+unordered_map<unsigned,unsigned>
+BN::sampling() const
+{
+	static vector<const Factor*> order = sampling_order();
+	unordered_map<unsigned,unsigned> valuation;
+	for (auto pf : order) {
+		unordered_map<unsigned,unsigned> sample = pf->sampling(valuation);
+		for (auto it : sample) {
+			valuation[it.first] = it.second;
+		}
+	}
+	return valuation;
+}
+
 bool
 BN::m_separated(const Variable *v1, const Variable *v2, const unordered_set<const Variable*> evidence, bool verbose) const
 {

@@ -34,6 +34,8 @@ public:
     Factor conditioning(const std::unordered_map<unsigned,unsigned> &evidence) const;
     Factor normalize() const;
 
+    std::unordered_map<unsigned,unsigned> sampling(const std::unordered_map<unsigned,unsigned> &evidence) const;
+
     friend std::ostream &operator<<(std::ostream &os, const Factor &f);
 
 private:
