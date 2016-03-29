@@ -1,4 +1,5 @@
 #include "io.hh"
+#include "utils.hh"
 using namespace bn;
 
 #include <iostream>
@@ -24,13 +25,7 @@ void
 prompt();
 
 void
-parse_query(smatch result, string &target, string &evidence, unordered_set<const Variable*> &target_vars, unordered_set<const Variable*> &evidence_vars);
-
-void
 execute_query(smatch result);
-
-void
-parse_independence_assertion(smatch result, const Variable **var1, const Variable **var2, unordered_set<const Variable*> &evidence_vars);
 
 void
 execute_independence_assertion(smatch result);
@@ -104,7 +99,7 @@ prompt()
 	}
 
 	regex quit_regex("quit");
-	regex query_regex("query ([0-9]+(\\s*,\\s*[0-9]+)*)\\s*(\\|\\s*([0-9]+(\\s*,\\s*[0-9]+)*))?");
+	regex query_regex("query ([^\\|]+)\\s*(\\|\\s*(.*))?");
 	regex independence_regex("ind ([0-9]+)\\s*,\\s*([0-9]+)\\s*(\\|\\s*([0-9]+(\\s*,\\s*[0-9]+)*))?");
 
 	cout << ">> Query prompt:" << endl;
@@ -130,49 +125,18 @@ prompt()
 }
 
 void
-parse_query(
-	smatch result,
-	string &target, string &evidence,
-	unordered_set<const Variable*> &target_vars, unordered_set<const Variable*> &evidence_vars)
-{
-	regex whitespace_regex("\\s");
-
-	target = result[1];
-	target = regex_replace(target, whitespace_regex, "");
-	evidence = result[4];
-	evidence = regex_replace(evidence, whitespace_regex, "");
-
-	string var = "";
-	for (char& c: target) {
-		if (c != ',') var += c;
-		else {
-			target_vars.insert(model->variables()[stoi(var)]);
-			var = "";
-		}
-	}
-	target_vars.insert(model->variables()[stoi(var)]);
-
-	if (evidence != "") {
-		var = "";
-		for (char& c: evidence) {
-			if (c != ',') var += c;
-			else {
-				evidence_vars.insert(model->variables()[stoi(var)]);
-				var = "";
-			}
-		}
-		evidence_vars.insert(model->variables()[stoi(var)]);
-	}
-}
-
-void
 execute_query(smatch result)
 {
-	string target;
-	string evidence;
+	regex whitespace_regex("\\s");
+	string target   = result[1]; target   = regex_replace(target,   whitespace_regex, "");
+	string evidence = result[3]; evidence = regex_replace(evidence, whitespace_regex, "");
+
 	unordered_set<const Variable*> target_vars;
 	unordered_set<const Variable*> evidence_vars;
-	parse_query(result, target, evidence, target_vars, evidence_vars);
+	parse_vars_set(model, target, target_vars);
+	if (evidence != "") {
+		parse_vars_set(model, evidence, evidence_vars);
+	}
 
 	double uptime;
 	Factor q = model->query(target_vars, evidence_vars, uptime, options);
@@ -186,43 +150,19 @@ execute_query(smatch result)
 	cout << ">> Executed in " << uptime << "ms." << endl << endl;
 }
 
-
-void
-parse_independence_assertion(
-	smatch result,
-	const Variable **var1, const Variable **var2,
-	unordered_set<const Variable*> &evidence_vars)
-{
-	regex whitespace_regex("\\s");
-
-	string id1 = result[1];
-	string id2 = result[2];
-
-	string evidence = result[4];
-	evidence = regex_replace(evidence, whitespace_regex, "");
-
-	*var1 = model->variables()[stoi(id1)];
-	*var2 = model->variables()[stoi(id2)];
-
-	if (evidence != "") {
-		string var = "";
-		for (char& c: evidence) {
-			if (c != ',') var += c;
-			else {
-				evidence_vars.insert(model->variables()[stoi(var)]);
-				var = "";
-			}
-		}
-		evidence_vars.insert(model->variables()[stoi(var)]);
-	}
-}
-
 void
 execute_independence_assertion(smatch result)
 {
-	const Variable *var1;
-	const Variable *var2;
-	unordered_set<const Variable*> evidence;
-	parse_independence_assertion(result, &var1, &var2, evidence);
-	cout << (model->m_separated(var1, var2, evidence, options["verbose"]) ? "true" : "false") << endl;
+	string id1 = result[1];
+	string id2 = result[2];
+	const Variable *var1 = model->variables()[stoi(id1)];
+	const Variable *var2 = model->variables()[stoi(id2)];
+
+	unordered_set<const Variable*> evidence_vars;
+	string evidence = result[4];
+	if (evidence != "") {
+		parse_vars_set(model, evidence, evidence_vars);
+	}
+
+	cout << (model->m_separated(var1, var2, evidence_vars, options["verbose"]) ? "true" : "false") << endl << endl;
 }

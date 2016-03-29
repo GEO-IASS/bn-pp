@@ -1,7 +1,7 @@
 CC=g++
-CXXFLAGS=-Wall -Wextra -ansi -pedantic -std=c++11 -O2
+CXXFLAGS=-Wall -Wextra -ansi -pedantic -std=c++11 -g
 
-OBJ=variable.o domain.o factor.o model.o io.o
+OBJ=utils.o variable.o domain.o factor.o model.o io.o
 
 all: bn mn
 
@@ -32,6 +32,20 @@ domain.o: domain.cpp domain.hh
 variable.o: variable.cpp variable.hh
 	$(CC) $(CXXFLAGS) -c $<
 
-.PHONY: clean
+utils.o: utils.cpp utils.hh
+	$(CC) $(CXXFLAGS) -c $<
+
+.PHONY: clean check check-bn check-mn
 clean:
 	rm -rvf .DS_Store *~ bn bn.dSYM/ mn mn.dSYM/ *.o
+
+check: check-bn check-mn
+
+check-bn: bn
+	valgrind --leak-check=full ./bn ../models/asia.uai -v <../models/asia.markov.query ; \
+	valgrind --leak-check=full ./bn ../models/asia.uai <../models/asia.ind  ; \
+	valgrind --leak-check=full ./bn ../models/asia.uai <../models/asia.not.ind
+
+check-mn: mn
+	valgrind --leak-check=full ./mn ../models/grid3x3.uai ../models/grid3x3-PR.uai.evid <../models/grid3x3-PR.uai.query ; \
+	valgrind --leak-check=full ./mn ../models/grid3x3.uai ../models/grid3x3-MAR.uai.evid <../models/grid3x3-MAR.uai.query
