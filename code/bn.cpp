@@ -63,7 +63,8 @@ usage(const char *progname)
 {
 	cout << "usage: " << progname << " /path/to/model.uai [OPTIONS]" << endl << endl;
 	cout << "OPTIONS:" << endl;
-	cout << "-b\tsolve query using bayes-ball" << endl;
+	cout << "-ve\tsolve query using variable elimination" << endl;
+	cout << "-bb\tsolve query using bayes-ball" << endl;
 	cout << "-h\tdisplay help information" << endl;
 	cout << "-v\tverbose" << endl;
 }
@@ -75,13 +76,17 @@ read_options(int argc, char *argv[])
 	options["verbose"] = false;
 	options["help"] = false;
 	options["bayes-ball"] = false;
+	options["variable-elimination"] = false;
 
 	for (int i = 2; i < argc; ++i) {
 		string option(argv[i]);
 		if (option == "-h") {
 			options["help"] = true;
 		}
-		else if (option == "-b") {
+		else if (option == "-ve") {
+			options["variable-elimination"] = true;
+		}
+		else if (option == "-bb") {
 			options["bayes-ball"] = true;
 		}
 		else if (option == "-v") {
@@ -127,6 +132,7 @@ prompt()
 void
 execute_query(smatch result)
 {
+	// parse query
 	regex whitespace_regex("\\s");
 	string target   = result[1]; target   = regex_replace(target,   whitespace_regex, "");
 	string evidence = result[3]; evidence = regex_replace(evidence, whitespace_regex, "");
@@ -138,8 +144,17 @@ execute_query(smatch result)
 		parse_vars_set(model, evidence, evidence_vars);
 	}
 
+	// solve query
 	double uptime;
-	Factor q = model->query(target_vars, evidence_vars, uptime, options);
+	Factor q;
+	if (options["variable-elimination"]) {
+		q = model->query_ve(target_vars, evidence_vars, uptime, options);
+	}
+	else {
+		q = model->query(target_vars, evidence_vars, uptime, options);
+	}
+
+	// print results
 	if (evidence != "") {
 		cout << "P(" + target + "|" + evidence + ") =" << endl;
 	}

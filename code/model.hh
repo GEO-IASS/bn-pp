@@ -44,6 +44,16 @@ public:
 		double &uptime,
 		std::unordered_map<std::string,bool> &options) const;
 
+	Factor query_ve(
+		const std::unordered_set<const Variable*> &target,
+		const std::unordered_set<const Variable*> &evidence,
+		double &uptime,
+		std::unordered_map<std::string,bool> &options) const;
+
+	Factor variable_elimination(
+		std::vector<const Variable*> &variables,
+		std::vector<const Factor*> &factors) const;
+
 	void bayes_ball(
 		const std::unordered_set<const Variable*> &J,
 		const std::unordered_set<const Variable*> &K,

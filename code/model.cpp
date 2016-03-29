@@ -1,6 +1,7 @@
 #include "model.hh"
 
 #include <unordered_set>
+#include <forward_list>
 #include <iostream>
 #include <chrono>
 using namespace std;
@@ -119,6 +120,127 @@ BN::query(
 	uptime = chrono::duration <double, milli> (diff).count();
 
 	return f;
+}
+
+Factor
+BN::query_ve(
+	const unordered_set<const Variable*> &target,
+	const unordered_set<const Variable*> &evidence,
+	double &uptime,
+	unordered_map<string,bool> &options) const
+{
+	auto start = chrono::steady_clock::now();
+
+	vector<const Variable*> variables;
+	vector<const Factor*> factors;
+	if (options["bayes-ball"]) {
+		unordered_set<const Variable*> Np, Ne, F;
+		bayes_ball(target, evidence, F, Np, Ne);
+		for (auto pv : Np) {
+			if (target.find(pv) == target.end() && evidence.find(pv) == evidence.end()) {
+				variables.push_back(pv);
+			}
+			factors.push_back(_factors[pv->id()]);
+		}
+	}
+	else {
+		for (auto pv : _variables) {
+			if (target.find(pv) == target.end() && evidence.find(pv) == evidence.end()) {
+				variables.push_back(pv);
+			}
+			factors.push_back(_factors[pv->id()]);
+		}
+	}
+
+	Factor f = variable_elimination(variables, factors);
+	if (!evidence.empty()) {
+		Factor g = f;
+		for (auto pv : target) {
+			g = g.sum_out(pv);
+		}
+		f = f.divide(g);
+	}
+
+	auto end = chrono::steady_clock::now();
+	auto diff = end - start;
+	uptime = chrono::duration <double, milli> (diff).count();
+
+	return f;
+}
+
+Factor
+BN::variable_elimination(
+	vector<const Variable*> &variables,
+	vector<const Factor*> &factors) const
+{
+	// initialize result
+	Factor result(1.0);
+
+	// choose elimination ordering
+	forward_list<const Variable*> ordering(variables.begin(), variables.end());
+
+	// initialize buckets
+	unordered_map<unsigned,unordered_set<const Factor*>> buckets;
+
+	// initialize new_factor_lst
+	vector<const Factor*> new_factor_lst;
+
+	for (auto pv : ordering) {
+		unordered_set<const Factor*> bfactors;
+		buckets[pv->id()] = bfactors;
+	}
+	for (auto pf : factors) {
+		bool in_bucket = false;
+		for (auto pv : ordering) {
+			if (pf->domain().in_scope(pv)) {
+				buckets[pv->id()].insert(pf);
+				in_bucket = true;
+				break;
+			}
+		}
+		if (!in_bucket) {
+			result *= *pf;
+		}
+	}
+
+	// eliminate all variables
+	while (!ordering.empty()) {
+		const Variable *var = ordering.front();
+		ordering.pop_front();
+
+		// eliminate var
+		Factor prod(1.0);
+		for (auto pf : buckets[var->id()]) {
+			prod *= *pf;
+		}
+		Factor *new_factor = new Factor(prod.sum_out(var));
+		new_factor_lst.push_back(new_factor);
+
+		// stop if finished
+		if (buckets.empty()) {
+			result *= *new_factor;
+			break;
+		}
+
+		// update bucket list with new factor
+		bool in_bucket = false;
+		for (auto pv : ordering) {
+			if (new_factor->domain().in_scope(pv)) {
+				buckets[pv->id()].insert(new_factor);
+				in_bucket = true;
+				break;
+			}
+		}
+		if (!in_bucket) {
+			result *= *new_factor;
+		}
+	}
+
+	for (auto pf : new_factor_lst) {
+		delete pf;
+	}
+
+	return result;
 }
 
 void

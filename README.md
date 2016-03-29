@@ -17,7 +17,8 @@ $ ./bn
 usage: ./bn /path/to/model.uai [OPTIONS]
 
 OPTIONS:
--b  solve query using bayes-ball
+-ve	solve query using variable elimination
+-bb	solve query using bayes-ball
 -h	display help information
 -v	verbose
 ```
@@ -42,7 +43,7 @@ $ ./bn ../models/asia.uai <../models/asia.not.ind
 
 To execute queries or check (in)dependencies on the prompt
 ```
-$ ./bn ../models/asia.uai
+$ ./bn ../models/asia.uai -ve -bb
 
 >> Query prompt:
 
@@ -54,9 +55,9 @@ Factor(width:2, size:4, partition:2)
 0 1 : 0.95000
 1 0 : 0.01000
 1 1 : 0.05000
->> Executed in 0.24763ms.
+>> Executed in 0.04897ms.
 
-? query 2, 3 ,4
+? query 2, 3, 4
 P(2,3,4) =
 Factor(width:3, size:8, partition:1.00000)
 2 3 4
@@ -68,7 +69,7 @@ Factor(width:3, size:8, partition:1.00000)
 1 0 1 : 0.27000
 1 1 0 : 0.02000
 1 1 1 : 0.03000
->> Executed in 0.24945ms.
+>> Executed in 0.05496ms.
 
 ? ind 7,1|4,5
 true

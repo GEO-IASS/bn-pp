@@ -42,7 +42,7 @@ clean:
 check: check-bn check-mn
 
 check-bn: bn
-	valgrind --leak-check=full ./bn ../models/asia.uai -v <../models/asia.markov.query ; \
+	valgrind --leak-check=full ./bn ../models/asia.uai -v -ve -bb <../models/asia.markov.query ; \
 	valgrind --leak-check=full ./bn ../models/asia.uai <../models/asia.ind  ; \
 	valgrind --leak-check=full ./bn ../models/asia.uai <../models/asia.not.ind
 
