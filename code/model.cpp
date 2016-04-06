@@ -4,6 +4,7 @@
 #include <forward_list>
 #include <iostream>
 #include <chrono>
+#include <cassert>
 using namespace std;
 
 namespace bn {
@@ -45,6 +46,52 @@ Model::joint_distribution(const unordered_map<unsigned,unsigned> &evidence) cons
 	return f;
 }
 
+double
+Model::partition(const unordered_map<unsigned,unsigned> &evidence, double &uptime) const
+{
+	auto start = chrono::steady_clock::now();
+
+	Factor f = joint_distribution(evidence);
+	double p = f.partition();
+
+	auto end = chrono::steady_clock::now();
+	auto diff = end - start;
+	uptime = chrono::duration <double, milli> (diff).count();
+
+	return p;
+}
+
+vector<const Factor*>
+Model::marginals(const unordered_map<unsigned,unsigned> &evidence, double &uptime) const
+{
+	auto start = chrono::steady_clock::now();
+
+	Factor joint = joint_distribution(evidence).normalize();
+
+	vector<const Factor*> marg;
+	for (auto pv : _variables) {
+		marg.push_back(new Factor(marginal(pv, joint)));
+	}
+
+	auto end = chrono::steady_clock::now();
+	auto diff = end - start;
+	uptime = chrono::duration <double, milli> (diff).count();
+
+	return marg;
+}
+
+Factor
+Model::marginal(const Variable *v, Factor &joint) const
+{
+	Factor f = joint;
+	for (auto pv : _variables) {
+		if (pv->id() != v->id()) {
+			f = f.sum_out(pv);
+		}
+	}
+	return f;
+}
+
 
 BN::BN(string name, vector<Variable*> &variables, vector<Factor*> &factors) : Model(name, variables, factors)
 {
@@ -69,8 +116,8 @@ Factor
 BN::query(
 	const unordered_set<const Variable*> &target,
 	const unordered_set<const Variable*> &evidence,
-	double &uptime,
-	unordered_map<string,bool> &options) const
+	unordered_map<string,bool> &options,
+	double &uptime) const
 {
 	auto start = chrono::steady_clock::now();
 
@@ -126,8 +173,8 @@ Factor
 BN::query_ve(
 	const unordered_set<const Variable*> &target,
 	const unordered_set<const Variable*> &evidence,
-	double &uptime,
-	unordered_map<string,bool> &options) const
+	unordered_map<string,bool> &options,
+	double &uptime) const
 {
 	auto start = chrono::steady_clock::now();
 
@@ -166,6 +213,58 @@ BN::query_ve(
 	uptime = chrono::duration <double, milli> (diff).count();
 
 	return f;
+}
+
+double
+BN::partition(const unordered_map<unsigned,unsigned> &evidence, double &uptime) const
+{
+	auto start = chrono::steady_clock::now();
+
+	vector<const Variable*> variables;
+	for (auto const pv : _variables) {
+		variables.push_back(pv);
+	}
+	vector<const Factor*> factors;
+	for (auto const pf : _factors) {
+		factors.push_back(new Factor(pf->conditioning(evidence)));
+	}
+	Factor part = variable_elimination(variables, factors);
+	assert(part[0] == part.partition());
+	double p = part.partition();
+
+	auto end = chrono::steady_clock::now();
+	auto diff = end - start;
+	uptime = chrono::duration <double, milli> (diff).count();
+
+	return p;
+}
+
+vector<const Factor*>
+BN::marginals(const unordered_map<unsigned,unsigned> &evidence, double &uptime) const
+{
+	auto start = chrono::steady_clock::now();
+
+	vector<const Factor*> factors;
+	for (auto const pf : _factors) {
+		factors.push_back(new Factor(pf->conditioning(evidence)));
+	}
+
+	vector<const Factor*> marg;
+	for (auto const pv : _variables) {
+		vector<const Variable*> vars;
+		for (auto const pv2 : _variables) {
+			if (pv2 != pv) {
+				vars.push_back(pv2);
+			}
+		}
+		marg.push_back(new Factor(variable_elimination(vars, factors).normalize()));
+	}
+
+	auto end = chrono::steady_clock::now();
+	auto diff = end - start;
+	uptime = chrono::duration <double, milli> (diff).count();
+
+	return marg;
 }
 
 Factor
@@ -598,37 +697,6 @@ MN::MN(string name, vector<Variable*> &variables, vector<Factor*> &factors) : Mo
 			}
 		}
 	}
-}
-
-double
-MN::partition(const unordered_map<unsigned,unsigned> &evidence) const
-{
-	Factor f = joint_distribution(evidence);
-	return f.partition();
-}
-
-vector<const Factor*>
-MN::marginals(const unordered_map<unsigned,unsigned> &evidence) const
-{
-	Factor joint = joint_distribution(evidence).normalize();
-
-	vector<const Factor*> marg;
-	for (auto pv : _variables) {
-		marg.push_back(new Factor(marginal(pv, joint)));
-	}
-	return marg;
-}
-
-Factor
-MN::marginal(const Variable *v, Factor &joint) const
-{
-	Factor f = joint;
-	for (auto pv : _variables) {
-		if (pv->id() != v->id()) {
-			f = f.sum_out(pv);
-		}
-	}
-	return f;
 }
 
 void

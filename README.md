@@ -1,6 +1,6 @@
 # bn-pp
 
-BN++ Data Structures and Algorithms in C++ for Bayesian Networks.
+BN++ Data Structures and Algorithms in C++ for (discrete) Bayesian networks and Markov networks.
 
 ## Compilation
 

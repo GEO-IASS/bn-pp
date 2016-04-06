@@ -100,7 +100,7 @@ read_factors(ifstream &input_file, vector<Variable*> &variables, vector<Factor*>
 }
 
 int
-read_uai_model(const char *filename, BN **model)
+read_uai_model(string &filename, BN **model)
 {
     ifstream input_file(filename);
     if (input_file.is_open()) {
@@ -126,7 +126,7 @@ read_uai_model(const char *filename, BN **model)
 }
 
 int
-read_uai_model(const char *filename, MN **model)
+read_uai_model(string &filename, MN **model)
 {
     ifstream input_file(filename);
     if (input_file.is_open()) {
@@ -153,7 +153,7 @@ read_uai_model(const char *filename, MN **model)
 
 
 int
-read_uai_evidence(const char *filename, std::unordered_map<unsigned,unsigned> &evidence)
+read_uai_evidence(string &filename, std::unordered_map<unsigned,unsigned> &evidence)
 {
     ifstream input_file(filename);
     if (input_file.is_open()) {

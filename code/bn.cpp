@@ -12,17 +12,29 @@ using namespace std;
 
 
 static unordered_map<string,bool> options;
+static vector<string> positional;
+
 static BN *model;
+static unordered_map<unsigned,unsigned> evidence;
 
 
 void
 usage(const char *progname);
 
 void
-read_options(int argc, char *argv[]);
+read_parameters(int argc, char *argv[]);
 
 void
 prompt();
+
+void
+execute_task();
+
+void
+execute_partition();
+
+void
+execute_marginals();
 
 void
 execute_query(smatch result);
@@ -43,18 +55,34 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	read_options(argc, argv);
+	read_parameters(argc, argv);
 	if (options["help"]) {
 		usage(progname);
 		return 0;
 	}
 
-	char *model_filename = argv[1];
+	string model_filename = positional[0];
+	if (options["verbose"]) {
+		cout << ">> Reading file " << model_filename << " ..." << endl;
+	}
 	if (read_uai_model(model_filename, &model)) {
 		return -1;
 	}
+	if (options["verbose"]) {
+		cout << *model << " ..." << endl;
+	}
 
-	prompt();
+	if (positional.size() > 1) {
+		string evidence_filename = positional[1];
+		if (options["verbose"]) {
+			cout << ">> Reading file " << evidence_filename << " ..." << endl;
+		}
+		if (read_uai_evidence(evidence_filename, evidence)) {
+			return -2;
+		}
+	}
+
+	execute_task();
 
 	delete model;
 
@@ -64,38 +92,115 @@ main(int argc, char *argv[])
 void
 usage(const char *progname)
 {
-	cout << "usage: " << progname << " /path/to/model.uai [OPTIONS]" << endl << endl;
+	cout << "usage: " << progname << " /path/to/model.uai [/path/to/evidence.uai.evid TASK] [OPTIONS]" << endl;
+	cout << endl;
+	cout << "TASK:" << endl;
+	cout << "-pr\tcompute partition function" << endl;
+	cout << "-mar\tcompute marginals" << endl;
+	cout << endl;
 	cout << "OPTIONS:" << endl;
-	cout << "-ve\tsolve query using variable elimination" << endl;
-	cout << "-bb\tsolve query using bayes-ball" << endl;
+	cout << "-ve\tsolve inference using variable elimination" << endl;
+	cout << "-bb\tsolve inference using bayes-ball" << endl;
 	cout << "-h\tdisplay help information" << endl;
 	cout << "-v\tverbose" << endl;
 }
 
 void
-read_options(int argc, char *argv[])
+read_parameters(int argc, char *argv[])
 {
 	// default options
-	options["verbose"] = false;
-	options["help"] = false;
+	options["partition"] = false;
+	options["marginals"] = false;
 	options["bayes-ball"] = false;
 	options["variable-elimination"] = false;
+	options["verbose"] = false;
+	options["help"] = false;
 
-	for (int i = 2; i < argc; ++i) {
-		string option(argv[i]);
-		if (option == "-h") {
-			options["help"] = true;
+	for (int i = 1; i < argc; ++i) {
+
+		string param(argv[i]);
+
+		if (param == "-pr") {
+			options["partition"] = true;
 		}
-		else if (option == "-ve") {
+		else if (param == "-mar") {
+			options["marginals"] = true;
+		}
+		else if (param == "-ve") {
 			options["variable-elimination"] = true;
 		}
-		else if (option == "-bb") {
+		else if (param == "-bb") {
 			options["bayes-ball"] = true;
 		}
-		else if (option == "-v") {
+		else if (param == "-v") {
 			options["verbose"] = true;
 		}
+		else if (param == "-h") {
+			options["help"] = true;
+		}
+		else if (param[0] == '-') {
+			cerr << "Error: invalid option `" << param << "'." << endl << endl;
+			usage(argv[0]);
+			exit(-1);
+		}
+		else {
+			positional.push_back(param);
+		}
 	}
+}
+
+void
+execute_task()
+{
+	if (options["partition"] || options["marginals"]) {
+		if (options["partition"]) execute_partition();
+		if (options["marginals"]) execute_marginals();
+	}
+	else {
+		prompt();
+	}
+}
+
+void
+execute_partition()
+{
+	double uptime;
+	double p = model->partition(evidence, uptime);
+
+	cout << ">> Partition = " << p << endl;
+
+	if (options["verbose"] && !evidence.empty()) {
+		cout << ">> Evidence:" << endl;
+		for (auto it : evidence) {
+			cout << "Variable = " << it.first << ", Value = " << it.second << endl;
+		}
+		cout << endl;
+	}
+
+	cout << ">> Executed in " << uptime << "ms." << endl << endl;
+}
+
+void
+execute_marginals()
+{
+	double uptime;
+	vector<const Factor*> marginals = model->marginals(evidence, uptime);
+
+	cout << ">> Marginals:" << endl;
+	for (auto pf : marginals) {
+		cout << *pf << endl;
+		delete pf;
+	}
+
+	if (options["verbose"] && !evidence.empty()) {
+		cout << ">> Evidence:" << endl;
+		for (auto it : evidence) {
+			cout << "Variable = " << it.first << ", Value = " << it.second << endl;
+		}
+		cout << endl;
+	}
+
+	cout << ">> Executed in " << uptime << "ms." << endl << endl;
 }
 
 void
@@ -155,10 +260,10 @@ execute_query(smatch result)
 	double uptime;
 	Factor q;
 	if (options["variable-elimination"]) {
-		q = model->query_ve(target_vars, evidence_vars, uptime, options);
+		q = model->query_ve(target_vars, evidence_vars, options, uptime);
 	}
 	else {
-		q = model->query(target_vars, evidence_vars, uptime, options);
+		q = model->query(target_vars, evidence_vars, options, uptime);
 	}
 
 	// print results

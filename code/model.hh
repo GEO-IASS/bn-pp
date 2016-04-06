@@ -23,6 +23,18 @@ public:
 	Factor joint_distribution() const;
 	Factor joint_distribution(const std::unordered_map<unsigned,unsigned> &evidence) const;
 
+	virtual double partition(
+		const std::unordered_map<unsigned,unsigned> &evidence,
+		double &uptime) const;
+
+	virtual std::vector<const Factor*> marginals(
+		const std::unordered_map<unsigned,unsigned> &evidence,
+		double &uptime) const;
+
+	virtual Factor marginal(
+		const Variable *v,
+		Factor &joint) const;
+
 	virtual void write(std::ostream&) const = 0;
 
 protected:
@@ -38,17 +50,25 @@ public:
 	const std::unordered_set<const Variable*> parents(const Variable *v)  const { return _parents.find(v)->second;  };
 	const std::unordered_set<const Variable*> children(const Variable *v) const { return _children.find(v)->second; };
 
+	double partition(
+		const std::unordered_map<unsigned,unsigned> &evidence,
+		double &uptime) const;
+
+	std::vector<const Factor*> marginals(
+		const std::unordered_map<unsigned,unsigned> &evidence,
+		double &uptime) const;
+
 	Factor query(
 		const std::unordered_set<const Variable*> &target,
 		const std::unordered_set<const Variable*> &evidence,
-		double &uptime,
-		std::unordered_map<std::string,bool> &options) const;
+		std::unordered_map<std::string,bool> &options,
+		double &uptime) const;
 
 	Factor query_ve(
 		const std::unordered_set<const Variable*> &target,
 		const std::unordered_set<const Variable*> &evidence,
-		double &uptime,
-		std::unordered_map<std::string,bool> &options) const;
+		std::unordered_map<std::string,bool> &options,
+		double &uptime) const;
 
 	Factor variable_elimination(
 		std::vector<const Variable*> &variables,
@@ -89,10 +109,6 @@ public:
 	MN(std::string name, std::vector<Variable*> &variables, std::vector<Factor*> &factors);
 
 	const std::unordered_set<const Variable*> neighbors(const Variable *v)  const { return _neighbors.find(v)->second;  };
-
-	double partition(const std::unordered_map<unsigned,unsigned> &evidence) const;
-	std::vector<const Factor*> marginals(const std::unordered_map<unsigned,unsigned> &evidence) const;
-	Factor marginal(const Variable *v, Factor &joint) const;
 
 	void write(std::ostream& os) const;
 	friend std::ostream &operator<<(std::ostream &os, const MN &bn);
