@@ -50,6 +50,9 @@ public:
 	const std::unordered_set<const Variable*> parents(const Variable *v)  const { return _parents.find(v)->second;  };
 	const std::unordered_set<const Variable*> children(const Variable *v) const { return _children.find(v)->second; };
 
+	const std::vector<const Variable*> roots() const;
+	const std::vector<const Variable*> leaves() const;
+
 	double partition(
 		const std::unordered_map<unsigned,unsigned> &evidence,
 		double &uptime) const;

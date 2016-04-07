@@ -45,6 +45,11 @@ execute_independence_assertion(smatch result);
 void
 execute_sampling();
 
+void
+execute_roots();
+
+void
+execute_leaves();
 
 int
 main(int argc, char *argv[])
@@ -215,6 +220,8 @@ prompt()
 	regex query_regex("query ([^\\|]+)\\s*(\\|\\s*(.*))?");
 	regex independence_regex("ind ([0-9]+)\\s*,\\s*([0-9]+)\\s*(\\|\\s*([0-9]+(\\s*,\\s*[0-9]+)*))?");
 	regex sample_regex("sample");
+	regex roots_regex("roots");
+	regex leaves_regex("leaves");
 
 	cout << ">> Query prompt:" << endl;
 	while (cin) {
@@ -232,11 +239,17 @@ prompt()
 		else if (regex_match(line, sample_regex)) {
 			execute_sampling();
 		}
+		else if (regex_match(line, roots_regex)) {
+			execute_roots();
+		}
+		else if (regex_match(line, leaves_regex)) {
+			execute_leaves();
+		}
 		else if (regex_match(line, quit_regex)) {
 			break;
 		}
 		else {
-			cout << "Error: not a valid query." << endl;
+			cout << "Error: not a valid query." << endl << endl;
 		}
 	}
 }
@@ -305,4 +318,28 @@ execute_sampling()
 		cout << id << " -> " << val << endl;
 	}
 	cout << endl;
+}
+
+void
+execute_roots()
+{
+	vector<const Variable*> roots = model->roots();
+	cout << ">> Roots: ";
+	cout << roots[0]->id();
+	for (unsigned i = 1; i < roots.size(); ++i) {
+		cout << ", " << roots[i]->id();
+	}
+	cout << endl << endl;
+}
+
+void
+execute_leaves()
+{
+	vector<const Variable*> leaves = model->leaves();
+	cout << ">> Leaves: ";
+	cout << leaves[0]->id();
+	for (unsigned i = 1; i < leaves.size(); ++i) {
+		cout << ", " << leaves[i]->id();
+	}
+	cout << endl << endl;
 }

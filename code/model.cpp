@@ -111,6 +111,30 @@ BN::BN(string name, vector<Variable*> &variables, vector<Factor*> &factors) : Mo
 	}
 }
 
+const vector<const Variable*>
+BN::roots() const
+{
+	vector<const Variable*> vars;
+	for (auto const pv : _variables) {
+		if (_parents.find(pv)->second.empty()) {
+			vars.push_back(pv);
+		}
+	}
+	return vars;
+}
+
+const vector<const Variable*>
+BN::leaves() const
+{
+	vector<const Variable*> vars;
+	for (auto const pv : _variables) {
+		if (_children.find(pv)->second.empty()) {
+			vars.push_back(pv);
+		}
+	}
+	return vars;
+}
+
 
 Factor
 BN::query(
