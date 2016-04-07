@@ -105,6 +105,7 @@ usage(const char *progname)
 	cout << endl;
 	cout << "OPTIONS:" << endl;
 	cout << "-ve\tsolve inference using variable elimination" << endl;
+	cout << "-mf\tvariable elimination using min-fill heuristic" << endl;
 	cout << "-bb\tsolve inference using bayes-ball" << endl;
 	cout << "-h\tdisplay help information" << endl;
 	cout << "-v\tverbose" << endl;
@@ -116,8 +117,11 @@ read_parameters(int argc, char *argv[])
 	// default options
 	options["partition"] = false;
 	options["marginals"] = false;
-	options["bayes-ball"] = false;
+
 	options["variable-elimination"] = false;
+	options["bayes-ball"] = false;
+	options["min-fill"] = false;
+
 	options["verbose"] = false;
 	options["help"] = false;
 
@@ -133,6 +137,9 @@ read_parameters(int argc, char *argv[])
 		}
 		else if (param == "-ve") {
 			options["variable-elimination"] = true;
+		}
+		else if (param == "-mf") {
+			options["min-fill"] = true;
 		}
 		else if (param == "-bb") {
 			options["bayes-ball"] = true;

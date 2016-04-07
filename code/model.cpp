@@ -1,4 +1,5 @@
 #include "model.hh"
+#include "graph.hh"
 
 #include <unordered_set>
 #include <forward_list>
@@ -300,7 +301,32 @@ BN::variable_elimination(
 	Factor result(1.0);
 
 	// choose elimination ordering
-	forward_list<const Variable*> ordering(variables.begin(), variables.end());
+	vector<const Variable*> vars = variables;
+	if (options["min-fill"]) {
+		Graph g(factors);
+		vars = g.ordering(variables);
+		if (options["verbose"]) {
+			cout << endl << ">> Original elimination order:";
+			if (variables.empty()) cout << " -" << endl;
+			else {
+				for (auto const pv : variables) {
+					cout << " " << pv->id();
+				}
+				cout << endl;
+			}
+
+			cout << ">> Min-fill elimination order:";
+			if (vars.empty()) cout << " -" << endl;
+			else {
+				for (auto const pv : vars) {
+					cout << " " << pv->id();
+				}
+				cout << endl;
+			}
+			cout << endl;
+		}
+	}
+	forward_list<const Variable*> ordering(vars.begin(), vars.end());
 
 	// initialize buckets
 	unordered_map<unsigned,unordered_set<const Factor*>> buckets;
