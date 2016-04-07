@@ -74,7 +74,7 @@ main(int argc, char *argv[])
 		return -1;
 	}
 	if (options["verbose"]) {
-		cout << *model << " ..." << endl;
+		cout << *model << endl;
 	}
 
 	if (positional.size() > 1) {

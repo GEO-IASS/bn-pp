@@ -111,6 +111,7 @@ read_uai_model(string &filename, BN **model)
         read_factors(input_file, variables, factors);
         if (type == "MARKOV") {
             input_file.close();
+            cerr << "Error: file " << filename << " is not a BAYES net." << endl;
             return -2;
         }
         if (type == "BAYES") {
@@ -136,6 +137,7 @@ read_uai_model(string &filename, MN **model)
         read_variables(input_file, variables);
         read_factors(input_file, variables, factors);
         if (type == "BAYES") {
+            cerr << "Error: file " << filename << " is not a MARKOV net." << endl;
             input_file.close();
             return -2;
         }

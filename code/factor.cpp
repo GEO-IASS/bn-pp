@@ -294,7 +294,7 @@ operator<<(ostream &os, const Factor &f)
         for (int j = 0; j < width; ++j) {
             os << valuation[j] << " ";
         }
-        os << ": " << fixed << setprecision(5) << f[i] << endl;
+        os << ": " << fixed << setprecision(7) << f[i] << endl;
         domain->next_valuation(valuation);
     }
 
