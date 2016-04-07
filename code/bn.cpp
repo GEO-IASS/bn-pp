@@ -177,7 +177,7 @@ void
 execute_partition()
 {
 	double uptime;
-	double p = model->partition(evidence, uptime);
+	double p = model->partition(evidence, options, uptime);
 
 	cout << ">> Partition = " << p << endl;
 
@@ -196,7 +196,7 @@ void
 execute_marginals()
 {
 	double uptime;
-	vector<const Factor*> marginals = model->marginals(evidence, uptime);
+	vector<const Factor*> marginals = model->marginals(evidence, options, uptime);
 
 	cout << ">> Marginals:" << endl;
 	for (auto pf : marginals) {

@@ -136,7 +136,7 @@ void
 execute_partition()
 {
 	double uptime;
-	double p = log10(model->partition(evidence, uptime));
+	double p = log10(model->partition(evidence, options, uptime));
 	cout << "Partition = " << p << endl << endl;
 	cout << ">> Executed in " << uptime << "ms." << endl << endl;
 }
@@ -146,7 +146,7 @@ execute_marginals()
 {
 	cout << ">> Marginals:" << endl;
 	double uptime;
-	vector<const Factor*> marginals = model->marginals(evidence, uptime);
+	vector<const Factor*> marginals = model->marginals(evidence, options, uptime);
 	for (auto pf : marginals) {
 		cout << *pf << endl;
 		delete pf;

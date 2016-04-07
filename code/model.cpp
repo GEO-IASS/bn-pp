@@ -48,7 +48,10 @@ Model::joint_distribution(const unordered_map<unsigned,unsigned> &evidence) cons
 }
 
 double
-Model::partition(const unordered_map<unsigned,unsigned> &evidence, double &uptime) const
+Model::partition(
+	const unordered_map<unsigned,unsigned> &evidence,
+	unordered_map<string,bool> &options,
+	double &uptime) const
 {
 	auto start = chrono::steady_clock::now();
 
@@ -63,7 +66,10 @@ Model::partition(const unordered_map<unsigned,unsigned> &evidence, double &uptim
 }
 
 vector<const Factor*>
-Model::marginals(const unordered_map<unsigned,unsigned> &evidence, double &uptime) const
+Model::marginals(
+	const unordered_map<unsigned,unsigned> &evidence,
+	unordered_map<string,bool> &options,
+	double &uptime) const
 {
 	auto start = chrono::steady_clock::now();
 
@@ -224,7 +230,7 @@ BN::query_ve(
 		}
 	}
 
-	Factor f = variable_elimination(variables, factors);
+	Factor f = variable_elimination(variables, factors, options);
 	if (!evidence.empty()) {
 		Factor g = f;
 		for (auto pv : target) {
@@ -241,7 +247,10 @@ BN::query_ve(
 }
 
 double
-BN::partition(const unordered_map<unsigned,unsigned> &evidence, double &uptime) const
+BN::partition(
+	const unordered_map<unsigned,unsigned> &evidence,
+	unordered_map<string,bool> &options,
+	double &uptime) const
 {
 	auto start = chrono::steady_clock::now();
 
@@ -253,7 +262,7 @@ BN::partition(const unordered_map<unsigned,unsigned> &evidence, double &uptime) 
 	for (auto const pf : _factors) {
 		factors.push_back(new Factor(pf->conditioning(evidence)));
 	}
-	Factor part = variable_elimination(variables, factors);
+	Factor part = variable_elimination(variables, factors, options);
 	assert(part[0] == part.partition());
 	double p = part.partition();
 
@@ -265,7 +274,10 @@ BN::partition(const unordered_map<unsigned,unsigned> &evidence, double &uptime) 
 }
 
 vector<const Factor*>
-BN::marginals(const unordered_map<unsigned,unsigned> &evidence, double &uptime) const
+BN::marginals(
+	const unordered_map<unsigned,unsigned> &evidence,
+	unordered_map<string,bool> &options,
+	double &uptime) const
 {
 	auto start = chrono::steady_clock::now();
 
@@ -282,7 +294,7 @@ BN::marginals(const unordered_map<unsigned,unsigned> &evidence, double &uptime) 
 				vars.push_back(pv2);
 			}
 		}
-		marg.push_back(new Factor(variable_elimination(vars, factors).normalize()));
+		marg.push_back(new Factor(variable_elimination(vars, factors, options).normalize()));
 	}
 
 	auto end = chrono::steady_clock::now();
@@ -295,7 +307,8 @@ BN::marginals(const unordered_map<unsigned,unsigned> &evidence, double &uptime) 
 Factor
 BN::variable_elimination(
 	vector<const Variable*> &variables,
-	vector<const Factor*> &factors) const
+	vector<const Factor*> &factors,
+	unordered_map<string,bool> &options) const
 {
 	// initialize result
 	Factor result(1.0);

@@ -25,10 +25,12 @@ public:
 
 	virtual double partition(
 		const std::unordered_map<unsigned,unsigned> &evidence,
+		std::unordered_map<std::string,bool> &options,
 		double &uptime) const;
 
 	virtual std::vector<const Factor*> marginals(
 		const std::unordered_map<unsigned,unsigned> &evidence,
+		std::unordered_map<std::string,bool> &options,
 		double &uptime) const;
 
 	virtual Factor marginal(
@@ -55,10 +57,12 @@ public:
 
 	double partition(
 		const std::unordered_map<unsigned,unsigned> &evidence,
+		std::unordered_map<std::string,bool> &options,
 		double &uptime) const;
 
 	std::vector<const Factor*> marginals(
 		const std::unordered_map<unsigned,unsigned> &evidence,
+		std::unordered_map<std::string,bool> &options,
 		double &uptime) const;
 
 	Factor query(
@@ -75,7 +79,8 @@ public:
 
 	Factor variable_elimination(
 		std::vector<const Variable*> &variables,
-		std::vector<const Factor*> &factors) const;
+		std::vector<const Factor*> &factors,
+		std::unordered_map<std::string,bool> &options) const;
 
 	void bayes_ball(
 		const std::unordered_set<const Variable*> &J,
