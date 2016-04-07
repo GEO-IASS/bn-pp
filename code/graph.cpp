@@ -78,8 +78,8 @@ Graph::ordering(const vector<const Variable*> &variables, unsigned &width) const
 unsigned
 Graph::min_fill(const unordered_set<unsigned> &vars) const
 {
-	unsigned next_var;
-	unsigned min_fill = _adj.size();
+	unsigned next_var = *(vars.begin());
+	unsigned min_fill = _adj.size()+1;
 
 	for (auto id : vars) {
 		unordered_set<unsigned> adj = neighbors(id);
@@ -92,9 +92,16 @@ Graph::min_fill(const unordered_set<unsigned> &vars) const
 				}
 			}
 		}
-		if (fill_in <= min_fill) {
+		if (fill_in < min_fill) {
 			next_var = id;
 			min_fill = fill_in;
+		}
+		else if (fill_in == min_fill) { // min-degree
+			unordered_set<unsigned> next_var_adj = neighbors(next_var);
+			if (adj.size() < next_var_adj.size()) {
+				next_var = id;
+				min_fill = fill_in;
+			}
 		}
 	}
 

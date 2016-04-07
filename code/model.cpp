@@ -326,6 +326,7 @@ BN::variable_elimination(
 		}
 
 		if (options["verbose"]) {
+
 			cout << endl << ">> Original elimination order";
 			if (variables.empty()) cout << ": -" << endl;
 			else {
