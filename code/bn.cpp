@@ -1,5 +1,7 @@
 #include "io.hh"
 #include "utils.hh"
+#include "model.hh"
+#include "graph.hh"
 using namespace bn;
 
 #include <iostream>
@@ -50,6 +52,9 @@ execute_roots();
 
 void
 execute_leaves();
+
+void
+execute_treewidth();
 
 int
 main(int argc, char *argv[])
@@ -218,17 +223,17 @@ execute_marginals()
 void
 prompt()
 {
-	if (options["verbose"]) {
-		cout << ">> Model:" << endl;
-		cout << *model << endl;
-	}
-
-	regex quit_regex("quit");
 	regex query_regex("query ([^\\|]+)\\s*(\\|\\s*(.*))?");
 	regex independence_regex("ind ([0-9]+)\\s*,\\s*([0-9]+)\\s*(\\|\\s*([0-9]+(\\s*,\\s*[0-9]+)*))?");
+
 	regex sample_regex("sample");
+
 	regex roots_regex("roots");
 	regex leaves_regex("leaves");
+
+	regex treewidth_regex("treewidth");
+
+	regex quit_regex("quit");
 
 	cout << ">> Query prompt:" << endl;
 	while (cin) {
@@ -251,6 +256,9 @@ prompt()
 		}
 		else if (regex_match(line, leaves_regex)) {
 			execute_leaves();
+		}
+		else if (regex_match(line, treewidth_regex)) {
+			execute_treewidth();
 		}
 		else if (regex_match(line, quit_regex)) {
 			break;
@@ -349,4 +357,42 @@ execute_leaves()
 		cout << ", " << leaves[i]->id();
 	}
 	cout << endl << endl;
+}
+
+void
+execute_treewidth()
+{
+	vector<const Variable*> vars;
+	for (auto const pv : model->variables()) {
+		vars.push_back(pv);
+	}
+
+	vector<const Factor*> factors;
+	for (auto const pf : model->factors()) {
+		factors.push_back(pf);
+	}
+
+	Graph g(factors);
+	unsigned original_width, min_fill_width;
+	original_width = g.order_width(vars);
+	vector<unsigned> ids = g.ordering(vars, min_fill_width);
+
+	cout << endl << ">> Original elimination order (width = " << original_width << ")" << endl;
+	if (options["verbose"]) {
+		cout << "  ";
+		for (auto const pv : vars) {
+			cout << " " << pv->id();
+		}
+		cout << endl << endl;
+	}
+
+	cout << ">> Min-fill elimination order (width = " << min_fill_width << ")" << endl;
+	if (options["verbose"]) {
+		cout << "  ";
+		for (auto id : ids) {
+			cout << " " << id;
+		}
+		cout << endl;
+	}
+	cout << endl;
 }
