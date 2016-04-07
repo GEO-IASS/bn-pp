@@ -317,20 +317,30 @@ BN::variable_elimination(
 	vector<const Variable*> vars = variables;
 	if (options["min-fill"]) {
 		Graph g(factors);
-		vars = g.ordering(variables);
+
+		unsigned min_fill_width = 0;
+		vector<unsigned> ids = g.ordering(variables, min_fill_width);
+
+		for (unsigned i = 0; i < ids.size(); ++i) {
+			vars[i] = _variables.at(ids[i]);
+		}
+
 		if (options["verbose"]) {
-			cout << endl << ">> Original elimination order:";
-			if (variables.empty()) cout << " -" << endl;
+			cout << endl << ">> Original elimination order";
+			if (variables.empty()) cout << ": -" << endl;
 			else {
+				unsigned original_width = g.order_width(variables);
+				cout << " (width = " << original_width << ")" << endl << "  ";
 				for (auto const pv : variables) {
 					cout << " " << pv->id();
 				}
 				cout << endl;
 			}
 
-			cout << ">> Min-fill elimination order:";
-			if (vars.empty()) cout << " -" << endl;
+			cout << endl << ">> Min-fill elimination order";
+			if (vars.empty()) cout << ": -" << endl;
 			else {
+				cout << " (width = " << min_fill_width << ")" << endl << "  ";
 				for (auto const pv : vars) {
 					cout << " " << pv->id();
 				}

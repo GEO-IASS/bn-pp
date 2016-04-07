@@ -15,59 +15,131 @@ Graph::Graph(const vector<const Factor*> &factors)
 			for (unsigned j = i+1; j < width; ++j) {
 				const Variable *v1 = domain[i];
 				const Variable *v2 = domain[j];
-				_adj[v1].insert(v2);
-				_adj[v2].insert(v1);
+				_adj[v1->id()].insert(v2->id());
+				_adj[v2->id()].insert(v1->id());
 			}
 		}
 	}
 }
 
-vector<const Variable*>
-Graph::ordering(const vector<const Variable*> &variables) const
+Graph::Graph(const Graph &g) : _adj(g._adj)
 {
-	vector<const Variable*> ordering;
-	unordered_set<const Variable*> processed;
-	while (processed.size() < variables.size()) {
-		unsigned min_index = min_fill(variables, processed);
-		const Variable *next_var = variables[min_index];
-		ordering.push_back(next_var);
-		processed.insert(next_var);
+
+}
+
+vector<unsigned>
+Graph::ordering(const vector<const Variable*> &variables, unsigned &width) const
+{
+	Graph g(*this);
+	unordered_set<unsigned> vars;
+	for (auto const pv : variables) {
+		vars.insert(pv->id());
 	}
+
+	vector<unsigned> ordering;
+	width = 0;
+
+	while (!vars.empty()) {
+
+		// find best next_var
+		unsigned next_var = g.min_fill(vars);
+		ordering.push_back(next_var);
+
+		// update order width
+		unordered_set<unsigned> adj = g.neighbors(next_var);
+		unsigned w = adj.size();
+		if (w > width) {
+			width = w;
+		}
+
+		// delete next_var
+		g._adj.erase(next_var);
+		vars.erase(next_var);
+
+		// erase edges to next_var
+		for (auto const padj : adj) {
+			g._adj[padj].erase(next_var);
+		}
+
+		// add fill-in edges
+		for (auto const id1 : adj) {
+			for (auto const id2 : adj) {
+				if (id1 != id2 && !g.connected(id1, id2)) {
+					g._adj[id1].insert(id2);
+					g._adj[id2].insert(id1);
+				}
+			}
+		}
+	}
+
 	return ordering;
 }
 
 unsigned
-Graph::min_fill(const vector<const Variable*> &variables, const unordered_set<const Variable*> &processed) const
+Graph::min_fill(const unordered_set<unsigned> &vars) const
 {
-	unsigned min_index = 0;
+	unsigned next_var;
 	unsigned min_fill = _adj.size();
 
-	unsigned nvars = variables.size();
-	for (unsigned i = 0; i < nvars; ++i) {
-
-		const Variable *var = variables.at(i);
-		if (processed.count(var)) continue;
-
-		unordered_set<const Variable*> neighboors = _adj.find(var)->second;
+	for (auto id : vars) {
+		unordered_set<unsigned> adj = neighbors(id);
 
 		unsigned fill_in = 0;
-		for (auto const v1 : neighboors) {
-			if (processed.count(v1)) continue;
-			for (auto const v2 : neighboors) {
-				if (processed.count(v2) || v1->id() >= v2->id()) continue;
-				if (!_adj.find(v1)->second.count(v2)) {
+		for (auto const id1 : adj) {
+			for (auto const id2 : adj) {
+				if (id1 < id2 && !connected(id1, id2)) {
 					fill_in++;
 				}
 			}
 		}
-
-		if (fill_in < min_fill) {
-			min_index = i;
+		if (fill_in <= min_fill) {
+			next_var = id;
 			min_fill = fill_in;
 		}
 	}
 
-	return min_index;
+	return next_var;
+}
+
+unsigned
+Graph::order_width(const vector<const Variable*> &variables) const
+{
+	Graph g(*this);
+	vector<unsigned> vars;
+	for (auto const pv : variables) {
+		vars.push_back(pv->id());
+	}
+
+	unsigned width = 0;
+	for (auto next_var : vars) {
+
+		// update order width
+		unordered_set<unsigned> adj = g.neighbors(next_var);
+		unsigned w = adj.size();
+		if (w > width) {
+			width = w;
+		}
+
+		// delete next_var
+		g._adj.erase(next_var);
+
+		// erase edges to next_var
+		for (auto const padj : adj) {
+			g._adj[padj].erase(next_var);
+		}
+
+		// add fill-in edges
+		for (auto const id1 : adj) {
+			for (auto const id2 : adj) {
+				if (id1 != id2 && !g.connected(id1, id2)) {
+					g._adj[id1].insert(id2);
+					g._adj[id2].insert(id1);
+				}
+			}
+		}
+	}
+
+	return width;
 }
 
 ostream &
@@ -75,11 +147,11 @@ operator<<(ostream &os, const Graph &g)
 {
 	os << "Graph:" << endl;
 	for (auto it : g._adj) {
-		const Variable *v = it.first;
-		unordered_set<const Variable*> neighboors = it.second;
-		os << v->id() << " :";
-		for (auto pv : neighboors) {
-			cout << " " << pv->id();
+		unsigned id = it.first;
+		unordered_set<unsigned> neighbors = it.second;
+		os << id << " :";
+		for (auto id2 : neighbors) {
+			cout << " " << id2;
 		}
 		os << endl;
 	}

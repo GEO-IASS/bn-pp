@@ -1,5 +1,5 @@
 CC=g++
-CXXFLAGS=-Wall -Wextra -ansi -pedantic -std=c++11 -g
+CXXFLAGS=-Wall -Wextra -ansi -pedantic -std=c++11 -O2
 
 OBJ=utils.o graph.o variable.o domain.o factor.o model.o io.o
 

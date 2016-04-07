@@ -13,17 +13,20 @@ namespace bn {
 	class Graph {
 	public:
 		Graph(const std::vector<const Factor*> &factors);
+		Graph(const Graph &g);
 
-		std::vector<const Variable*> ordering(const std::vector<const Variable*> &variables) const;
+		std::unordered_set<unsigned> neighbors(unsigned id) const { return _adj.find(id)->second; };
+		bool connected(unsigned id1, unsigned id2) const { return _adj.find(id1)->second.count(id2); };
 
-		unsigned min_fill(
-			const std::vector<const Variable*> &variables,
-			const std::unordered_set<const Variable*> &processed) const;
+		std::vector<unsigned> ordering(const std::vector<const Variable*> &variables, unsigned &width) const;
+		unsigned min_fill(const std::unordered_set<unsigned> &vars) const;
+
+		unsigned order_width(const std::vector<const Variable*> &variables) const;
 
 		friend std::ostream &operator<<(std::ostream &os, const Graph &g);
 
 	private:
-		std::unordered_map<const Variable*,std::unordered_set<const Variable*>> _adj;
+		std::unordered_map<unsigned,std::unordered_set<unsigned>> _adj;
 	};
 
 }
