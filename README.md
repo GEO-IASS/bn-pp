@@ -13,14 +13,19 @@ $ make clean && make
 ### Bayes nets
 
 ```
-$ ./bn
-usage: ./bn /path/to/model.uai [OPTIONS]
+$ ./bn -h
+usage: ./bn /path/to/model.uai [/path/to/evidence.uai.evid TASK] [OPTIONS]
+
+TASK:
+-pr	 compute partition function
+-mar compute marginals
 
 OPTIONS:
--ve	solve query using variable elimination
--bb	solve query using bayes-ball
--h	display help information
--v	verbose
+-ve	 solve inference using variable elimination
+-mf	 variable elimination using min-fill heuristic
+-bb	 solve inference using bayes-ball
+-h	 display help information
+-v	 verbose
 ```
 
 To inspect the markov assumptions of asia model
