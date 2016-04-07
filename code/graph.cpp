@@ -10,7 +10,18 @@ Graph::Graph(const vector<const Factor*> &factors)
 	for (auto const pf : factors) {
 		const Domain &domain = pf->domain();
 		unsigned width = domain.width();
+		for (unsigned i = 0; i < width; ++i) {
+			unordered_set<unsigned> empty_set;
+			_adj[domain[i]->id()] = empty_set;
+		}
+	}
+
+	for (auto const pf : factors) {
+		const Domain &domain = pf->domain();
+		unsigned width = domain.width();
+
 		if (width == 0) continue;
+
 		for (unsigned i = 0; i < width-1; ++i) {
 			for (unsigned j = i+1; j < width; ++j) {
 				const Variable *v1 = domain[i];
@@ -24,7 +35,6 @@ Graph::Graph(const vector<const Factor*> &factors)
 
 Graph::Graph(const Graph &g) : _adj(g._adj)
 {
-
 }
 
 vector<unsigned>
@@ -52,10 +62,6 @@ Graph::ordering(const vector<const Variable*> &variables, unsigned &width) const
 			width = w;
 		}
 
-		// delete next_var
-		g._adj.erase(next_var);
-		vars.erase(next_var);
-
 		// erase edges to next_var
 		for (auto const padj : adj) {
 			g._adj[padj].erase(next_var);
@@ -70,6 +76,10 @@ Graph::ordering(const vector<const Variable*> &variables, unsigned &width) const
 				}
 			}
 		}
+
+		// delete next_var
+		g._adj.erase(next_var);
+		vars.erase(next_var);
 	}
 
 	return ordering;
@@ -112,6 +122,7 @@ unsigned
 Graph::order_width(const vector<const Variable*> &variables) const
 {
 	Graph g(*this);
+
 	vector<unsigned> vars;
 	for (auto const pv : variables) {
 		vars.push_back(pv->id());
