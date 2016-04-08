@@ -56,6 +56,9 @@ execute_leaves();
 void
 execute_treewidth();
 
+void
+execute_stats();
+
 int
 main(int argc, char *argv[])
 {
@@ -228,6 +231,7 @@ prompt()
 
 	regex sample_regex("sample");
 
+	regex stats_regex("stats");
 	regex roots_regex("roots");
 	regex leaves_regex("leaves");
 
@@ -250,6 +254,9 @@ prompt()
 		}
 		else if (regex_match(line, sample_regex)) {
 			execute_sampling();
+		}
+		else if (regex_match(line, stats_regex)) {
+			execute_stats();
 		}
 		else if (regex_match(line, roots_regex)) {
 			execute_roots();
@@ -394,5 +401,73 @@ execute_treewidth()
 		}
 		cout << endl;
 	}
+	cout << endl;
+}
+
+void
+execute_stats()
+{
+	unsigned nvars, nfactors;
+	unsigned nroots, nleaves, ndisconnected;
+	unsigned maxcard;
+	unsigned maxparents, maxchildren;
+	unsigned nparams;
+	double minprob, maxprob, maxpartition;
+
+	vector<Variable*> variables = model->variables();
+	vector<Factor*> factors = model->factors();
+
+	nvars = variables.size();
+	nfactors = factors.size();
+
+	nroots = nleaves = ndisconnected = 0;
+	maxparents = maxchildren = 0;
+	maxcard = 0;
+	for (auto const pv : variables) {
+		unsigned card = pv->size();
+		maxcard = (card > maxcard) ? card : maxcard;
+
+		unordered_set<const Variable*> pa = model->parents(pv);
+		unsigned nparents = pa.size();
+
+		unordered_set<const Variable*> ch = model->children(pv);
+		unsigned nchildren = ch.size();
+
+		if (nparents == 0)  ++nroots;
+		if (nchildren == 0) ++nleaves;
+		if (nparents == 0 && nchildren == 0) ++ndisconnected;
+		maxparents  = (nparents > maxparents)   ? nparents  : maxparents;
+		maxchildren = (nchildren > maxchildren) ? nchildren : maxchildren;
+	}
+
+	nparams = 0;
+	minprob = 1.0;
+	maxprob = 0.0;
+	maxpartition = 0.0;
+	for (auto const pf : factors) {
+		const Domain &domain = pf->domain();
+
+		unsigned size = domain.size();
+		nparams += size-1;
+
+		double partition = pf->partition();
+		maxpartition = (partition > maxpartition) ? partition : maxpartition;
+
+		for (unsigned i = 0; i < size; ++i) {
+			double prob = (*pf)[i];
+			minprob = (prob < minprob) ? prob : minprob;
+			maxprob = (prob > maxprob) ? prob : maxprob;
+		}
+	}
+
+	string name = model->name();
+	cout << ">> Stats (" << name << ")" << endl;
+	cout << ">> variables = " << nvars << ", factors = " << nfactors << endl;
+	cout << ">> roots = " << nroots << ", leaves = " << nleaves << ", disconnected = " << ndisconnected << endl;
+	cout << ">> max number of parents = " << maxparents << ", max number of children = " << maxchildren << endl;
+	cout << ">> max domain size = " << maxcard << endl;
+	cout << ">> number of parameters = " << nparams << endl;
+	cout << ">> lowest probability = " << minprob << ", highest probability = " << maxprob << endl;
+	cout << ">> max partition = " << maxpartition << endl;
 	cout << endl;
 }
