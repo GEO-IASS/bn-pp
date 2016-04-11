@@ -45,12 +45,12 @@ clean:
 check: check-bn check-mn
 
 check-bn: bn
-	valgrind --leak-check=full ./bn ../models/asia.uai -v -ve -bb <../models/asia.markov.query ; \
-	valgrind --leak-check=full ./bn ../models/asia.uai ../models/asia.uai.evid -pr ; \
-	valgrind --leak-check=full ./bn ../models/asia.uai ../models/asia.uai.evid -mar ; \
-	valgrind --leak-check=full ./bn ../models/asia.uai <../models/asia.ind  ; \
-	valgrind --leak-check=full ./bn ../models/asia.uai <../models/asia.not.ind
+	valgrind --leak-check=full ./bn ../models/bayesnets/asia.uai -v -ve -bb <../models/bayesnets/asia.markov.query ; \
+	valgrind --leak-check=full ./bn ../models/bayesnets/asia.uai ../models/bayesnets/asia.uai.evid -pr ; \
+	valgrind --leak-check=full ./bn ../models/bayesnets/asia.uai ../models/bayesnets/asia.uai.evid -mar ; \
+	valgrind --leak-check=full ./bn ../models/bayesnets/asia.uai <../models/bayesnets/asia.ind  ; \
+	valgrind --leak-check=full ./bn ../models/bayesnets/asia.uai <../models/bayesnets/asia.not.ind
 
 check-mn: mn
-	valgrind --leak-check=full ./mn ../models/grid3x3.uai ../models/grid3x3-PR.uai.evid <../models/grid3x3-PR.uai.query ; \
-	valgrind --leak-check=full ./mn ../models/grid3x3.uai ../models/grid3x3-MAR.uai.evid <../models/grid3x3-MAR.uai.query
+	valgrind --leak-check=full ./mn ../models/markovnets/grid3x3.uai ../models/markovnets/grid3x3-PR.uai.evid <../models/markovnets/grid3x3-PR.uai.query ; \
+	valgrind --leak-check=full ./mn ../models/markovnets/grid3x3.uai ../models/markovnets/grid3x3-MAR.uai.evid <../models/markovnets/grid3x3-MAR.uai.query

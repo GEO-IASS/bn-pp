@@ -54,7 +54,7 @@ void
 execute_leaves();
 
 void
-execute_treewidth();
+execute_width();
 
 void
 execute_stats();
@@ -114,6 +114,8 @@ usage(const char *progname)
 	cout << "OPTIONS:" << endl;
 	cout << "-ve\tsolve inference using variable elimination" << endl;
 	cout << "-mf\tvariable elimination using min-fill heuristic" << endl;
+	cout << "-wmf\tvariable elimination using weighted min-fill heuristic" << endl;
+	cout << "-md\tvariable elimination using min-degree heuristic" << endl;
 	cout << "-bb\tsolve inference using bayes-ball" << endl;
 	cout << "-h\tdisplay help information" << endl;
 	cout << "-v\tverbose" << endl;
@@ -129,6 +131,8 @@ read_parameters(int argc, char *argv[])
 	options["variable-elimination"] = false;
 	options["bayes-ball"] = false;
 	options["min-fill"] = false;
+	options["weighted-min-fill"] = false;
+	options["min-degree"] = false;
 
 	options["verbose"] = false;
 	options["help"] = false;
@@ -148,6 +152,12 @@ read_parameters(int argc, char *argv[])
 		}
 		else if (param == "-mf") {
 			options["min-fill"] = true;
+		}
+		else if (param == "-wmf") {
+			options["weighted-min-fill"] = true;
+		}
+		else if (param == "-md") {
+			options["min-degree"] = true;
 		}
 		else if (param == "-bb") {
 			options["bayes-ball"] = true;
@@ -235,7 +245,7 @@ prompt()
 	regex roots_regex("roots");
 	regex leaves_regex("leaves");
 
-	regex treewidth_regex("treewidth");
+	regex width_regex("width");
 
 	regex quit_regex("quit");
 
@@ -264,8 +274,8 @@ prompt()
 		else if (regex_match(line, leaves_regex)) {
 			execute_leaves();
 		}
-		else if (regex_match(line, treewidth_regex)) {
-			execute_treewidth();
+		else if (regex_match(line, width_regex)) {
+			execute_width();
 		}
 		else if (regex_match(line, quit_regex)) {
 			break;
@@ -367,24 +377,18 @@ execute_leaves()
 }
 
 void
-execute_treewidth()
+execute_width()
 {
-	vector<const Variable*> vars;
-	for (auto const pv : model->variables()) {
-		vars.push_back(pv);
-	}
+	vector<const Variable*> vars(model->variables().begin(), model->variables().end());
+	vector<const Factor*> factors(model->factors().begin(), model->factors().end());
 
-	vector<const Factor*> factors;
-	for (auto const pf : model->factors()) {
-		factors.push_back(pf);
-	}
+	Graph g(vars, factors);
+	unsigned original_width, min_fill_width, weighted_min_fill_width, min_degree;
 
-	Graph g(factors);
-	unsigned original_width, min_fill_width;
+	// original order
 	original_width = g.order_width(vars);
-	vector<unsigned> ids = g.ordering(vars, min_fill_width);
-
-	cout << endl << ">> Original elimination order (width = " << original_width << ")" << endl;
+	cout << endl;
+	cout << ">> Original elimination order          (width = " << original_width << ")" << endl;
 	if (options["verbose"]) {
 		cout << "  ";
 		for (auto const pv : vars) {
@@ -393,7 +397,40 @@ execute_treewidth()
 		cout << endl << endl;
 	}
 
-	cout << ">> Min-fill elimination order (width = " << min_fill_width << ")" << endl;
+	// min-degree order
+	unordered_map<string,bool> order_options;
+	order_options["min-degree"] = true;
+
+	vector<unsigned> ids = g.ordering(vars, min_degree, order_options);
+	cout << ">> Min-degree elimination order        (width = " << min_degree << ")" << endl;
+	if (options["verbose"]) {
+		cout << "  ";
+		for (auto id : ids) {
+			cout << " " << id;
+		}
+		cout << endl << endl;
+	}
+
+	// min-fill order
+	order_options.clear();
+	order_options["min-fill"] = true;
+
+	ids = g.ordering(vars, min_fill_width, order_options);
+	cout << ">> Min-fill elimination order          (width = " << min_fill_width << ")" << endl;
+	if (options["verbose"]) {
+		cout << "  ";
+		for (auto id : ids) {
+			cout << " " << id;
+		}
+		cout << endl << endl;
+	}
+
+	// weighted min-fill order
+	order_options.clear();
+	order_options["weighted-min-fill"] = true;
+
+	ids = g.ordering(vars, weighted_min_fill_width, order_options);
+	cout << ">> Weighted min-fill elimination order (width = " << weighted_min_fill_width << ")" << endl;
 	if (options["verbose"]) {
 		cout << "  ";
 		for (auto id : ids) {

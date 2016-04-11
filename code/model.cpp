@@ -315,41 +315,19 @@ BN::variable_elimination(
 
 	// choose elimination ordering
 	vector<const Variable*> vars = variables;
-	if (options["min-fill"]) {
-		Graph g(factors);
 
-		unsigned min_fill_width = 0;
-		vector<unsigned> ids = g.ordering(variables, min_fill_width);
+	if (options["min-fill"] || options["weighted-min-fill"] || options["min-degree"]) {
+		vector<const Variable*> model_variables(_variables.begin(), _variables.end());
+		Graph g(model_variables, factors);
+
+		unsigned width = 0;
+		vector<unsigned> ids = g.ordering(variables, width, options);
 
 		for (unsigned i = 0; i < ids.size(); ++i) {
 			vars[i] = _variables.at(ids[i]);
 		}
-
-		if (options["verbose"]) {
-
-			cout << endl << ">> Original elimination order";
-			if (variables.empty()) cout << ": -" << endl;
-			else {
-				unsigned original_width = g.order_width(variables);
-				cout << " (width = " << original_width << ")" << endl << "  ";
-				for (auto const pv : variables) {
-					cout << " " << pv->id();
-				}
-				cout << endl;
-			}
-
-			cout << endl << ">> Min-fill elimination order";
-			if (vars.empty()) cout << ": -" << endl;
-			else {
-				cout << " (width = " << min_fill_width << ")" << endl << "  ";
-				for (auto const pv : vars) {
-					cout << " " << pv->id();
-				}
-				cout << endl;
-			}
-			cout << endl;
-		}
 	}
+
 	forward_list<const Variable*> ordering(vars.begin(), vars.end());
 
 	// initialize buckets

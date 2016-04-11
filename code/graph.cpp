@@ -5,7 +5,7 @@ using namespace std;
 
 namespace bn {
 
-Graph::Graph(const vector<const Factor*> &factors)
+Graph::Graph(const std::vector<const Variable*> variables, const vector<const Factor*> &factors) : _variables(variables)
 {
 	for (auto const pf : factors) {
 		const Domain &domain = pf->domain();
@@ -33,14 +33,19 @@ Graph::Graph(const vector<const Factor*> &factors)
 	}
 }
 
-Graph::Graph(const Graph &g) : _adj(g._adj)
+Graph::Graph(const Graph &g) : _variables(g._variables), _adj(g._adj)
 {
 }
 
 vector<unsigned>
-Graph::ordering(const vector<const Variable*> &variables, unsigned &width) const
+Graph::ordering(
+	const vector<const Variable*> &variables,
+	unsigned &width,
+	unordered_map<string,bool> &options) const
 {
+
 	Graph g(*this);
+
 	unordered_set<unsigned> vars;
 	for (auto const pv : variables) {
 		vars.insert(pv->id());
@@ -52,7 +57,16 @@ Graph::ordering(const vector<const Variable*> &variables, unsigned &width) const
 	while (!vars.empty()) {
 
 		// find best next_var
-		unsigned next_var = g.min_fill(vars);
+		unsigned next_var;
+		if (options["min-degree"]) {
+			next_var = g.min_degree(vars);
+		}
+		else if (options["weighted-min-fill"]) {
+			next_var = g.weighted_min_fill(vars);
+		}
+		else {
+			next_var = g.min_fill(vars);
+		}
 		ordering.push_back(next_var);
 
 		// update order width
@@ -86,6 +100,25 @@ Graph::ordering(const vector<const Variable*> &variables, unsigned &width) const
 }
 
 unsigned
+Graph::min_degree(const unordered_set<unsigned> &vars) const
+{
+	unsigned next_var = *(vars.begin());
+	unsigned min_degree = _adj.size()+1;
+
+	for (auto id : vars) {
+		unordered_set<unsigned> adj = neighbors(id);
+		unsigned degree = adj.size();
+
+		if (degree < min_degree) {
+			next_var = id;
+			min_degree = degree;
+		}
+	}
+
+	return next_var;
+}
+
+unsigned
 Graph::min_fill(const unordered_set<unsigned> &vars) const
 {
 	unsigned next_var = *(vars.begin());
@@ -106,11 +139,53 @@ Graph::min_fill(const unordered_set<unsigned> &vars) const
 			next_var = id;
 			min_fill = fill_in;
 		}
-		else if (fill_in == min_fill) { // min-degree
+		else if (fill_in == min_fill) { // use min-degree as tiebraker
 			unordered_set<unsigned> next_var_adj = neighbors(next_var);
 			if (adj.size() < next_var_adj.size()) {
 				next_var = id;
 				min_fill = fill_in;
+			}
+		}
+	}
+
+	return next_var;
+}
+
+unsigned
+Graph::weighted_min_fill(const unordered_set<unsigned> &vars) const
+{
+	unsigned next_var = *(vars.begin());
+	unordered_set<unsigned> next_var_adj = neighbors(next_var);
+
+	unsigned weighted_min_fill = 0;
+	for (auto const id1 : next_var_adj) {
+		for (auto const id2 : next_var_adj) {
+			if (id1 < id2 && !connected(id1, id2)) {
+				weighted_min_fill += _variables.at(id1)->size() * _variables.at(id2)->size();
+			}
+		}
+	}
+
+	for (auto id : vars) {
+		unordered_set<unsigned> adj = neighbors(id);
+
+		unsigned weighted_fill_in = 0;
+		for (auto const id1 : adj) {
+			for (auto const id2 : adj) {
+				if (id1 < id2 && !connected(id1, id2)) {
+					weighted_fill_in += _variables.at(id1)->size() * _variables.at(id2)->size();
+				}
+			}
+		}
+		if (weighted_fill_in < weighted_min_fill) {
+			next_var = id;
+			weighted_min_fill = weighted_fill_in;
+		}
+		else if (weighted_fill_in == weighted_min_fill) { // min-degree
+			unordered_set<unsigned> next_var_adj = neighbors(next_var);
+			if (adj.size() < next_var_adj.size()) {
+				next_var = id;
+				weighted_min_fill = weighted_fill_in;
 			}
 		}
 	}
