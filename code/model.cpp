@@ -6,6 +6,7 @@
 #include <iostream>
 #include <chrono>
 #include <cassert>
+#include <cmath>
 using namespace std;
 
 namespace bn {
@@ -252,19 +253,34 @@ BN::partition(
 	unordered_map<string,bool> &options,
 	double &uptime) const
 {
+	double p = -1.0;
+
 	auto start = chrono::steady_clock::now();
 
-	vector<const Variable*> variables;
-	for (auto const pv : _variables) {
-		variables.push_back(pv);
+	if (options["logical-sampling"]) {
+		double lp = 0.1;
+		unsigned long M = 3*log(2/0.05) / pow(0.05,2) * 1/lp;
+		// unsigned long M = 50000;
+		if (options["verbose"]) {
+			cout << "M = " << M << " samples." << endl;
+		}
+		p = logical_sampling(evidence, M);
 	}
-	vector<const Factor*> factors;
-	for (auto const pf : _factors) {
-		factors.push_back(new Factor(pf->conditioning(evidence)));
+	else { // options["variable-elimination"]
+		vector<const Variable*> variables;
+		for (auto const pv : _variables) {
+			if (evidence.find(pv->id()) == evidence.end()) {
+				variables.push_back(pv);
+			}
+		}
+		vector<const Factor*> factors;
+		for (auto const pf : _factors) {
+			factors.push_back(new Factor(pf->conditioning(evidence)));
+		}
+		Factor part = variable_elimination(variables, factors, options);
+		assert(part[0] == part.partition());
+		p = part.partition();
 	}
-	Factor part = variable_elimination(variables, factors, options);
-	assert(part[0] == part.partition());
-	double p = part.partition();
 
 	auto end = chrono::steady_clock::now();
 	auto diff = end - start;
@@ -325,6 +341,16 @@ BN::variable_elimination(
 
 		for (unsigned i = 0; i < ids.size(); ++i) {
 			vars[i] = _variables.at(ids[i]);
+		}
+
+		if (options["verbose"]) {
+			unsigned width = g.order_width(vars);
+			cout << ">> Original elimination order (width = " << width << ")" << endl;
+			cout << "  ";
+			for (auto const pv : vars) {
+				cout << " " << pv->id();
+			}
+			cout << endl << endl;
 		}
 	}
 
@@ -529,6 +555,24 @@ BN::sampling_order() const
 	}
 
 	return order;
+}
+
+double
+BN::logical_sampling(const unordered_map<unsigned,unsigned> &evidence, long unsigned M) const
+{
+	long unsigned N = 0;
+	for (long unsigned i = 0; i < M; ++i) {
+		unordered_map<unsigned,unsigned> sample = sampling();
+		bool consistent = true;
+		for (auto it : evidence) {
+			if (sample.at(it.first) != it.second) {
+				consistent = false;
+				break;
+			}
+		}
+		if (consistent) ++N;
+	}
+	return 1.0*N/M;
 }
 
 unordered_map<unsigned,unsigned>

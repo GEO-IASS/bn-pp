@@ -93,6 +93,13 @@ main(int argc, char *argv[])
 		if (read_uai_evidence(evidence_filename, evidence)) {
 			return -2;
 		}
+		if (options["verbose"] && !evidence.empty()) {
+			cout << ">> Evidence:" << endl;
+			for (auto it : evidence) {
+				cout << "Variable = " << it.first << ",\tValue = " << it.second << endl;
+			}
+			cout << endl;
+		}
 	}
 
 	execute_task();
@@ -112,6 +119,7 @@ usage(const char *progname)
 	cout << "-mar\tcompute marginals" << endl;
 	cout << endl;
 	cout << "OPTIONS:" << endl;
+	cout << "-ls\tsolve inference using logical sampling" << endl;
 	cout << "-ve\tsolve inference using variable elimination" << endl;
 	cout << "-mf\tvariable elimination using min-fill heuristic" << endl;
 	cout << "-wmf\tvariable elimination using weighted min-fill heuristic" << endl;
@@ -127,6 +135,8 @@ read_parameters(int argc, char *argv[])
 	// default options
 	options["partition"] = false;
 	options["marginals"] = false;
+
+	options["logical-sampling"] = false;
 
 	options["variable-elimination"] = false;
 	options["bayes-ball"] = false;
@@ -146,6 +156,9 @@ read_parameters(int argc, char *argv[])
 		}
 		else if (param == "-mar") {
 			options["marginals"] = true;
+		}
+		else if (param == "-ls") {
+			options["logical-sampling"] = true;
 		}
 		else if (param == "-ve") {
 			options["variable-elimination"] = true;
@@ -195,18 +208,12 @@ void
 execute_partition()
 {
 	double uptime;
-	double p = model->partition(evidence, options, uptime);
 
-	cout << ">> Partition = " << p << endl;
-
-	if (options["verbose"] && !evidence.empty()) {
-		cout << ">> Evidence:" << endl;
-		for (auto it : evidence) {
-			cout << "Variable = " << it.first << ", Value = " << it.second << endl;
-		}
-		cout << endl;
+	if (options["verbose"]) {
+		cout << ">> Computing partition for evidence ..." << endl;
 	}
-
+	double p = model->partition(evidence, options, uptime);
+	cout << ">> Partition = " << p << endl;
 	cout << ">> Executed in " << uptime << "ms." << endl << endl;
 }
 

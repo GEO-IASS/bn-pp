@@ -94,6 +94,7 @@ public:
 		const std::unordered_set<const Variable*> evidence,
 		bool verbose=false) const;
 
+	double logical_sampling(const std::unordered_map<unsigned,unsigned> &evidence, long unsigned M) const;
 	std::unordered_map<unsigned,unsigned> sampling() const;
 
 	std::unordered_set<const Variable*> markov_independence(const Variable* v) const;
