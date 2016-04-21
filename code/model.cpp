@@ -258,13 +258,14 @@ BN::partition(
 	auto start = chrono::steady_clock::now();
 
 	if (options["logical-sampling"]) {
-		double lp = 0.1;
-		unsigned long M = 3*log(2/0.05) / pow(0.05,2) * 1/lp;
-		// unsigned long M = 50000;
-		if (options["verbose"]) {
-			cout << "M = " << M << " samples." << endl;
-		}
-		p = logical_sampling(evidence, M);
+		double delta = 0.05;
+		double epsilon = 0.05;
+		p = logical_sampling(evidence, delta, epsilon);
+	}
+	else if (options["likelihood-weighting"]) {
+		double delta = 0.05;
+		double epsilon = 0.05;
+		p = likelihood_weighting(evidence, delta, epsilon);
 	}
 	else { // options["variable-elimination"]
 		vector<const Variable*> variables;
@@ -511,8 +512,43 @@ BN::bayes_ball(const unordered_set<const Variable*> &J, const unordered_set<cons
 	}
 }
 
+
+double
+BN::logical_sampling(const unordered_map<unsigned,unsigned> &evidence, double delta, double epsilon) const
+{
+	double lp = 0.1;
+	unsigned long M = 3*log(2/delta) / pow(epsilon,2) * 1/lp;
+	long unsigned N = 0;
+	for (long unsigned i = 0; i < M; ++i) {
+		unordered_map<unsigned,unsigned> sample = sampling();
+		bool consistent = true;
+		for (auto it : evidence) {
+			if (sample.at(it.first) != it.second) {
+				consistent = false;
+				break;
+			}
+		}
+		if (consistent) ++N;
+	}
+	return 1.0*N/M;
+}
+
+unordered_map<unsigned,unsigned>
+BN::sampling() const
+{
+	static vector<const Factor*> order = topological_sampling_order();
+	unordered_map<unsigned,unsigned> valuation;
+	for (auto pf : order) {
+		unordered_map<unsigned,unsigned> sample = pf->sampling(valuation);
+		for (auto it : sample) {
+			valuation[it.first] = it.second;
+		}
+	}
+	return valuation;
+}
+
 vector<const Factor*>
-BN::sampling_order() const
+BN::topological_sampling_order() const
 {
 	vector<const Factor*> order;
 
@@ -531,9 +567,6 @@ BN::sampling_order() const
 			unsigned id = it.first;
 			unsigned left_to_sample = it.second;
 			if (left_to_sample == 0) {
-				// cout << *_variables[id] << endl;
-				// cout << *_factors[id] << endl;
-				// cout << endl;
 				ready_to_sample.insert(id);
 				order.push_back(_factors[id]);
 			}
@@ -557,36 +590,49 @@ BN::sampling_order() const
 	return order;
 }
 
+
 double
-BN::logical_sampling(const unordered_map<unsigned,unsigned> &evidence, long unsigned M) const
+BN::likelihood_weighting(const unordered_map<unsigned,unsigned> &evidence, double delta, double epsilon) const
 {
-	long unsigned N = 0;
-	for (long unsigned i = 0; i < M; ++i) {
-		unordered_map<unsigned,unsigned> sample = sampling();
-		bool consistent = true;
-		for (auto it : evidence) {
-			if (sample.at(it.first) != it.second) {
-				consistent = false;
-				break;
+	static vector<const Factor*> order = topological_sampling_order();
+
+	// initialization
+	double U = 1.0;
+	for (auto const pf : _factors) {
+		U *= pf->max();
+	}
+	double Nstar = 4*log(2/delta)*(1+epsilon)/(pow(epsilon,2));
+	double N, M;
+	N = M = 0.0;
+
+	// sampling
+	while (N < Nstar) {
+		double W = 1.0;
+		unordered_map<unsigned,unsigned> valuation;
+		for (auto const pf : order) {
+			const Domain &d = pf->domain();
+			const Variable *Xi = d[0];
+			unsigned id = Xi->id();
+			if (evidence.find(id) == evidence.end()) {
+				unordered_map<unsigned,unsigned> sample = pf->sampling(valuation);
+				for (auto it : sample) {
+					valuation[it.first] = it.second;
+				}
+			}
+			else {
+				valuation[id] = evidence.find(id)->second;
+				Factor f = pf->conditioning(valuation);
+				assert(f.size() == 1);
+				assert(f[0] == f.partition());
+				W *= f[0];
 			}
 		}
-		if (consistent) ++N;
+		assert(W > 0.0);
+		N += W/U;
+		++M;
 	}
-	return 1.0*N/M;
-}
 
-unordered_map<unsigned,unsigned>
-BN::sampling() const
-{
-	static vector<const Factor*> order = sampling_order();
-	unordered_map<unsigned,unsigned> valuation;
-	for (auto pf : order) {
-		unordered_map<unsigned,unsigned> sample = pf->sampling(valuation);
-		for (auto it : sample) {
-			valuation[it.first] = it.second;
-		}
-	}
-	return valuation;
+	return U*N/M;
 }
 
 bool

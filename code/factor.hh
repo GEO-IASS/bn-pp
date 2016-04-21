@@ -21,12 +21,15 @@ public:
     void operator*=(const Factor &f);
 
     const Domain &domain() const { return *_domain; }
-    unsigned size()    const { return _domain->size();  }
-    unsigned width()   const { return _domain->width(); }
-    double partition() const { return _partition; }
+    unsigned size()        const { return _domain->size();  }
+    unsigned width()       const { return _domain->width(); }
+    double partition()     const { return _partition; }
 
     const double &operator[](unsigned i) const;
     double &operator[](unsigned i);
+
+    double max() const;
+    double min() const;
 
     Factor sum_out(const Variable *variable) const;
     Factor product(const Factor &f) const;

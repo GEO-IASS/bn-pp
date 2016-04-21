@@ -120,6 +120,7 @@ usage(const char *progname)
 	cout << endl;
 	cout << "OPTIONS:" << endl;
 	cout << "-ls\tsolve inference using logical sampling" << endl;
+	cout << "-lw\tsolve inference using (bounded-variance) likelihood weighting" << endl;
 	cout << "-ve\tsolve inference using variable elimination" << endl;
 	cout << "-mf\tvariable elimination using min-fill heuristic" << endl;
 	cout << "-wmf\tvariable elimination using weighted min-fill heuristic" << endl;
@@ -137,6 +138,7 @@ read_parameters(int argc, char *argv[])
 	options["marginals"] = false;
 
 	options["logical-sampling"] = false;
+	options["likelihood-weighting"] = false;
 
 	options["variable-elimination"] = false;
 	options["bayes-ball"] = false;
@@ -159,6 +161,9 @@ read_parameters(int argc, char *argv[])
 		}
 		else if (param == "-ls") {
 			options["logical-sampling"] = true;
+		}
+		else if (param == "-lw") {
+			options["likelihood-weighting"] = true;
 		}
 		else if (param == "-ve") {
 			options["variable-elimination"] = true;

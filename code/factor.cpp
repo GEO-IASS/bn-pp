@@ -94,6 +94,26 @@ Factor::operator[](unsigned i)
     else throw "Factor::operator[]: Index out of range.";
 }
 
+double
+Factor::max() const
+{
+    double m = 0.0;
+    for (auto p : _values) {
+        if (p > m) m = p;
+    }
+    return m;
+}
+
+double
+Factor::min() const
+{
+    double m = _partition;
+    for (auto p : _values) {
+        if (p < m) m = p;
+    }
+    return m;
+}
+
 Factor
 Factor::product(const Factor &f) const
 {
@@ -248,9 +268,6 @@ Factor::sampling(const unordered_map<unsigned,unsigned> &evidence) const
 
     const Domain &d = f.domain();
     unsigned width = d.width();
-
-    // cout << f << endl;
-    // cout << "rand = " << prob << endl << endl;
 
     vector<unsigned> valuation(width, 0);
     unsigned f_size = f.size();

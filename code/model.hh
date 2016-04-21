@@ -94,8 +94,10 @@ public:
 		const std::unordered_set<const Variable*> evidence,
 		bool verbose=false) const;
 
-	double logical_sampling(const std::unordered_map<unsigned,unsigned> &evidence, long unsigned M) const;
+	double logical_sampling(const std::unordered_map<unsigned,unsigned> &evidence, double delta, double epsilon) const;
 	std::unordered_map<unsigned,unsigned> sampling() const;
+
+	double likelihood_weighting(const std::unordered_map<unsigned,unsigned> &evidence, double delta, double epsilon) const;
 
 	std::unordered_set<const Variable*> markov_independence(const Variable* v) const;
 	std::unordered_set<const Variable*> descendants(const Variable *v) const;
@@ -110,7 +112,7 @@ private:
 	std::unordered_map<const Variable*,std::unordered_set<const Variable*>> _parents;
 	std::unordered_map<const Variable*,std::unordered_set<const Variable*>> _children;
 
-	std::vector<const Factor*> sampling_order() const;
+	std::vector<const Factor*> topological_sampling_order() const;
 };
 
 class MN  : public Model {
