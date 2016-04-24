@@ -45,9 +45,6 @@ void
 execute_independence_assertion(smatch result);
 
 void
-execute_sampling();
-
-void
 execute_roots();
 
 void
@@ -254,8 +251,6 @@ prompt()
 	regex query_regex("query ([^\\|]+)\\s*(\\|\\s*(.*))?");
 	regex independence_regex("ind ([0-9]+)\\s*,\\s*([0-9]+)\\s*(\\|\\s*([0-9]+(\\s*,\\s*[0-9]+)*))?");
 
-	regex sample_regex("sample");
-
 	regex stats_regex("stats");
 
 	regex roots_regex("roots");
@@ -264,9 +259,10 @@ prompt()
 
 	regex width_regex("width");
 
+	regex help_regex("help");
 	regex quit_regex("quit");
 
-	cout << ">> Query prompt:" << endl;
+	cout << ">> Query prompt: (type a command or 'help' to list all commands)" << endl;
 	while (cin) {
 		cout << "? ";
 		string line;
@@ -278,9 +274,6 @@ prompt()
 		}
 		else if (regex_match(line, str_match_result, independence_regex)) {
 			execute_independence_assertion(str_match_result);
-		}
-		else if (regex_match(line, sample_regex)) {
-			execute_sampling();
 		}
 		else if (regex_match(line, stats_regex)) {
 			execute_stats();
@@ -296,6 +289,20 @@ prompt()
 		}
 		else if (regex_match(line, width_regex)) {
 			execute_width();
+		}
+		else if (regex_match(line, help_regex)) {
+			cout << endl;
+			cout << "COMMANDS:" << endl << endl;
+			cout << "query <target> [ | evidence]  to compute a (conditional) distribution" << endl;
+			cout << "ind   <target> [ | evidence]  to check an independence assertion" << endl;
+			cout << "stats                         to get summary information about the model" << endl;
+			cout << "roots                         to get the list of root nodes" << endl;
+			cout << "leaves                        to get the list of leaf nodes" << endl;
+			cout << "blanket <var>                 to get the markov blanket of var" << endl;
+			cout << "width                         to get elimination order width for ordering heuristics" << endl;
+			cout << "help                          to display this information" << endl;
+			cout << "quit                          to exit the prompt" << endl;
+			cout << endl;
 		}
 		else if (regex_match(line, quit_regex)) {
 			break;
@@ -357,19 +364,6 @@ execute_independence_assertion(smatch result)
 	}
 
 	cout << (model->m_separated(var1, var2, evidence_vars, options["verbose"]) ? "true" : "false") << endl << endl;
-}
-
-void
-execute_sampling()
-{
-	unordered_map<unsigned,unsigned> sample = model->sampling();
-	cout << "sample = " << endl;
-	for (auto it : sample) {
-		unsigned id = it.first;
-		unsigned val = it.second;
-		cout << id << " -> " << val << endl;
-	}
-	cout << endl;
 }
 
 void

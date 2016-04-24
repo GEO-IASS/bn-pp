@@ -89,8 +89,6 @@ public:
 		bool verbose=false) const;
 
 	double logical_sampling(const std::unordered_map<unsigned,unsigned> &evidence, double delta, double epsilon) const;
-	std::unordered_map<unsigned,unsigned> sampling() const;
-
 	double likelihood_weighting(const std::unordered_map<unsigned,unsigned> &evidence, double delta, double epsilon) const;
 
 	const std::unordered_set<const Variable*> parents(const Variable *v)  const { return _parents.find(v)->second;  };
@@ -114,6 +112,7 @@ private:
 	std::unordered_map<const Variable*,std::unordered_set<const Variable*>> _children;
 
 	std::vector<const Factor*> topological_sampling_order() const;
+	std::unordered_map<unsigned,unsigned> sampling() const;
 };
 
 class MN  : public Model {
