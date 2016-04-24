@@ -287,6 +287,10 @@ BN::partition(
 		Factor part = variable_elimination(variables, factors, options);
 		assert(part[0] == part.partition());
 		p = part.partition();
+		for (auto const pf : factors) {
+			delete pf;
+		}
+		factors.clear();
 	}
 
 	auto end = chrono::steady_clock::now();
@@ -706,6 +710,11 @@ BN::gibbs_sampling(const unordered_map<unsigned,unsigned> &evidence, long unsign
 		}
 		if (consistent) ++N;
 	}
+
+	for (auto const pf : blanket_factors) {
+		delete pf;
+	}
+	blanket_factors.clear();
 
 	return 1.0*N/M;
 }
