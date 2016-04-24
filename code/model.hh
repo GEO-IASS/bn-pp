@@ -49,12 +49,6 @@ class BN : public Model {
 public:
 	BN(std::string name, std::vector<Variable*> &variables, std::vector<Factor*> &factors);
 
-	const std::unordered_set<const Variable*> parents(const Variable *v)  const { return _parents.find(v)->second;  };
-	const std::unordered_set<const Variable*> children(const Variable *v) const { return _children.find(v)->second; };
-
-	const std::vector<const Variable*> roots() const;
-	const std::vector<const Variable*> leaves() const;
-
 	double partition(
 		const std::unordered_map<unsigned,unsigned> &evidence,
 		std::unordered_map<std::string,bool> &options,
@@ -99,9 +93,16 @@ public:
 
 	double likelihood_weighting(const std::unordered_map<unsigned,unsigned> &evidence, double delta, double epsilon) const;
 
-	std::unordered_set<const Variable*> markov_independence(const Variable* v) const;
-	std::unordered_set<const Variable*> descendants(const Variable *v) const;
+	const std::unordered_set<const Variable*> parents(const Variable *v)  const { return _parents.find(v)->second;  };
+	const std::unordered_set<const Variable*> children(const Variable *v) const { return _children.find(v)->second; };
 
+	const std::vector<const Variable*> roots()  const;
+	const std::vector<const Variable*> leaves() const;
+
+	std::unordered_set<const Variable*> markov_blanket(const Variable *v)      const;
+	std::unordered_set<const Variable*> markov_independence(const Variable *v) const;
+
+	std::unordered_set<const Variable*> descendants(const Variable *v) const;
 	std::unordered_set<const Variable*> ancestors(const Variable *v) const;
 	std::unordered_set<const Variable*> ancestors(const std::unordered_set<const Variable*> &vars) const;
 

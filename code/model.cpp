@@ -718,6 +718,24 @@ BN::m_separated(const Variable *v1, const Variable *v2, const unordered_set<cons
 }
 
 unordered_set<const Variable*>
+BN::markov_blanket(const Variable *v) const
+{
+	unordered_set<const Variable*> MB;
+	for (auto const pv : parents(v)) {
+		MB.insert(pv);
+	}
+	for (auto const pv : children(v)) {
+		MB.insert(pv);
+		for (auto const pv2 : parents(pv)) {
+			if (pv2->id() != v->id()) {
+				MB.insert(pv2);
+			}
+		}
+	}
+	return MB;
+}
+
+unordered_set<const Variable*>
 BN::markov_independence(const Variable* v) const
 {
 	unordered_set<const Variable*> nd;

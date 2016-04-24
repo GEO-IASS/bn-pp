@@ -54,6 +54,9 @@ void
 execute_leaves();
 
 void
+execute_markov_blanket(smatch result);
+
+void
 execute_width();
 
 void
@@ -254,8 +257,10 @@ prompt()
 	regex sample_regex("sample");
 
 	regex stats_regex("stats");
+
 	regex roots_regex("roots");
 	regex leaves_regex("leaves");
+	regex blanket_regex("blanket\\s*([0-9]+)");
 
 	regex width_regex("width");
 
@@ -285,6 +290,9 @@ prompt()
 		}
 		else if (regex_match(line, leaves_regex)) {
 			execute_leaves();
+		}
+		else if (regex_match(line, str_match_result, blanket_regex)) {
+			execute_markov_blanket(str_match_result);
 		}
 		else if (regex_match(line, width_regex)) {
 			execute_width();
@@ -368,10 +376,10 @@ void
 execute_roots()
 {
 	vector<const Variable*> roots = model->roots();
-	cout << ">> Roots: ";
+	cout << ">> Roots:";
 	cout << roots[0]->id();
 	for (unsigned i = 1; i < roots.size(); ++i) {
-		cout << ", " << roots[i]->id();
+		cout << " " << roots[i]->id();
 	}
 	cout << endl << endl;
 }
@@ -380,10 +388,23 @@ void
 execute_leaves()
 {
 	vector<const Variable*> leaves = model->leaves();
-	cout << ">> Leaves: ";
+	cout << ">> Leaves:";
 	cout << leaves[0]->id();
 	for (unsigned i = 1; i < leaves.size(); ++i) {
-		cout << ", " << leaves[i]->id();
+		cout << " " << leaves[i]->id();
+	}
+	cout << endl << endl;
+}
+
+void
+execute_markov_blanket(smatch result)
+{
+	string id = result[1];
+	const Variable *var = model->variables()[stoi(id)];
+	unordered_set<const Variable*> MB = model->markov_blanket(var);
+	cout << ">> Markov blanket:";
+	for (auto const pv : MB) {
+		cout << " " << pv->id();
 	}
 	cout << endl << endl;
 }
