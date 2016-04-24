@@ -10,6 +10,7 @@ using namespace bn;
 #include <vector>
 #include <unordered_map>
 #include <regex>
+#include <cassert>
 using namespace std;
 
 
@@ -121,6 +122,7 @@ usage(const char *progname)
 	cout << "OPTIONS:" << endl;
 	cout << "-ls\tsolve inference using logical sampling" << endl;
 	cout << "-lw\tsolve inference using (bounded-variance) likelihood weighting" << endl;
+	cout << "-gs\tsolve inference using gibbs sampling" << endl;
 	cout << "-ve\tsolve inference using variable elimination" << endl;
 	cout << "-mf\tvariable elimination using min-fill heuristic" << endl;
 	cout << "-wmf\tvariable elimination using weighted min-fill heuristic" << endl;
@@ -139,6 +141,7 @@ read_parameters(int argc, char *argv[])
 
 	options["logical-sampling"] = false;
 	options["likelihood-weighting"] = false;
+	options["gibbs-sampling"] = false;
 
 	options["variable-elimination"] = false;
 	options["bayes-ball"] = false;
@@ -164,6 +167,9 @@ read_parameters(int argc, char *argv[])
 		}
 		else if (param == "-lw") {
 			options["likelihood-weighting"] = true;
+		}
+		else if (param == "-gs") {
+			options["gibbs-sampling"] = true;
 		}
 		else if (param == "-ve") {
 			options["variable-elimination"] = true;
@@ -371,8 +377,7 @@ execute_roots()
 {
 	vector<const Variable*> roots = model->roots();
 	cout << ">> Roots:";
-	cout << roots[0]->id();
-	for (unsigned i = 1; i < roots.size(); ++i) {
+	for (unsigned i = 0; i < roots.size(); ++i) {
 		cout << " " << roots[i]->id();
 	}
 	cout << endl << endl;
@@ -383,8 +388,7 @@ execute_leaves()
 {
 	vector<const Variable*> leaves = model->leaves();
 	cout << ">> Leaves:";
-	cout << leaves[0]->id();
-	for (unsigned i = 1; i < leaves.size(); ++i) {
+	for (unsigned i = 0; i < leaves.size(); ++i) {
 		cout << " " << leaves[i]->id();
 	}
 	cout << endl << endl;
@@ -394,7 +398,9 @@ void
 execute_markov_blanket(smatch result)
 {
 	string id = result[1];
-	const Variable *var = model->variables()[stoi(id)];
+	unsigned index = stoi(id);
+	assert(index < model->variables().size());
+	const Variable *var = model->variables()[index];
 	unordered_set<const Variable*> MB = model->markov_blanket(var);
 	cout << ">> Markov blanket:";
 	for (auto const pv : MB) {

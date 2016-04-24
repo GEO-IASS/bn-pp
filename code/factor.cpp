@@ -264,7 +264,9 @@ Factor::sampling(const unordered_map<unsigned,unsigned> &evidence) const
     prob /= rd.max();
 
     Factor f = conditioning(evidence);
-    assert(fabs(f.partition() - 1.0) < 0.001);
+    if (fabs(f.partition() - 1.0) > 0.001) {
+        f = f.normalize();
+    }
 
     const Domain &d = f.domain();
     unsigned width = d.width();

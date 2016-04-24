@@ -267,7 +267,13 @@ BN::partition(
 		double epsilon = 0.05;
 		p = likelihood_weighting(evidence, delta, epsilon);
 	}
-	else { // options["variable-elimination"]
+	else if (options["gibbs-sampling"]) {
+		long unsigned M = 100000;
+		long unsigned burn_in = 10000;
+		p = gibbs_sampling(evidence, M, burn_in);
+	}
+	// variable elimination by default
+	else {
 		vector<const Variable*> variables;
 		for (auto const pv : _variables) {
 			if (evidence.find(pv->id()) == evidence.end()) {
@@ -633,6 +639,75 @@ BN::likelihood_weighting(const unordered_map<unsigned,unsigned> &evidence, doubl
 	}
 
 	return U*N/M;
+}
+
+double
+BN::gibbs_sampling(const unordered_map<unsigned,unsigned> &evidence, long unsigned M, long unsigned burn_in) const
+{
+	// pre-compute probabilities p(X|MB(X))
+	vector<const Factor*> blanket_factors;
+	for (auto const pf : _factors) {
+		const Domain &d = pf->domain();
+		const Variable *X = d[0];
+
+		unordered_set<const Variable*> MB = markov_blanket(X);
+		MB.insert(X);
+
+		Factor factor(1.0);
+		for (auto const pv : MB) {
+			unordered_set<const Variable*> pa = parents(pv);
+			Factor f(*_factors.at(pv->id()));
+			for (auto const pv2 : pa) {
+				if (MB.find(pv2) == MB.end()) {
+					f = f.sum_out(pv2);
+				}
+			}
+			factor *= f;
+		}
+		blanket_factors.push_back(new Factor(factor.divide(factor.sum_out(X))));
+	}
+
+	// initialize valuation
+	unordered_map<unsigned,unsigned> valuation;
+	for (auto const pv : _variables) {
+		unsigned id = pv->id();
+		if (evidence.find(id) == evidence.end()) {
+			valuation[id] = 0;
+		}
+		else {
+			valuation[id] = evidence.find(id)->second;
+		}
+	}
+
+	// compute samplings from p(Xi|MB(Xi))
+	long unsigned N = 0;
+	for (long unsigned i = 0; i < M+burn_in; ++i) {
+
+		// generate new valuation
+		for (auto const pf : blanket_factors) {
+			const Domain &d = pf->domain();
+			const Variable *X = d[0];
+			valuation.erase(valuation.find(X->id()));
+			unordered_map<unsigned,unsigned> sample = pf->sampling(valuation);
+			for (auto it : sample) {
+				valuation[it.first] = it.second;
+			}
+		}
+
+		if (i < burn_in) continue;
+
+		// check if new valuation is consistent with evidence
+		bool consistent = true;
+		for (auto it : evidence) {
+			if (valuation.at(it.first) != it.second) {
+				consistent = false;
+				break;
+			}
+		}
+		if (consistent) ++N;
+	}
+
+	return 1.0*N/M;
 }
 
 bool
