@@ -21,11 +21,16 @@ TASK:
 -mar compute marginals
 
 OPTIONS:
--ve	 solve inference using variable elimination
--mf	 variable elimination using min-fill heuristic
--bb	 solve inference using bayes-ball
--h	 display help information
--v	 verbose
+-ls   solve inference using logical sampling
+-lw   solve inference using (bounded-variance) likelihood weighting
+-gs   solve inference using gibbs sampling
+-ve   solve inference using variable elimination
+-mf   variable elimination using min-fill heuristic
+-wmf  variable elimination using weighted min-fill heuristic
+-md   variable elimination using min-degree heuristic
+-bb   solve inference using bayes-ball
+-h    display help information
+-v    verbose
 ```
 
 To inspect the markov assumptions of asia model
