@@ -41,7 +41,7 @@ namespace bn {
 		FactorGraph(const std::vector<const Variable*> &variables, const std::vector<const Factor*> &factors);
 		~FactorGraph();
 
-		void update(unsigned iterations);
+		unsigned update(unsigned max, double epsilon);
 		Factor marginal(const Variable *v) const;
 
 	private:
@@ -50,8 +50,8 @@ namespace bn {
 		std::unordered_map<unsigned,std::unordered_map<unsigned,const Factor*>> _var2fact_msgs;
 		std::unordered_map<unsigned,std::unordered_map<unsigned,const Factor*>> _fact2var_msgs;
 
-		void update_variable_to_factor_msg(unsigned var_id, unsigned factor_id);
-		void update_factor_to_variable_msg(unsigned factor_id, unsigned var_id);
+		double update_variable_to_factor_msg(unsigned var_id, unsigned factor_id);
+		double update_factor_to_variable_msg(unsigned factor_id, unsigned var_id);
 	};
 
 }

@@ -1,6 +1,7 @@
 #include "graph.hh"
 
 #include <iostream>
+#include <cmath>
 using namespace std;
 
 namespace bn {
@@ -271,36 +272,6 @@ FactorGraph::FactorGraph(
 			_var2fact_msgs[id][i] = new Factor(new Domain(sc), 1.0/r_j);
 		}
 	}
-
-	// _fact2var_msgs
-	// cout << "@ Messages from _fact2var_msgs ..." << endl;
-	// for (auto it1 : _fact2var_msgs) {
-	// 	cout << ">> factor = ";
-	// 	const Factor *f = _factors[it1.first];
-	// 	cout << *f;
-	// 	cout << ">> scope = " << endl;
-	// 	for (auto it2 : it1.second) {
-	// 		unsigned id = it2.first;
-	// 		const Factor *msg = it2.second;
-	// 		cout << ">> var = " << id << endl;
-	// 		cout << ">> msg = " << *msg << endl;
-	// 	}
-	// 	cout << endl;
-	// }
-
-	// _var2fact_msgs
-	// cout << "@ Messages from _var2fact_msgs ..." << endl;
-	// for (auto it1 : _var2fact_msgs) {
-	// 	cout << ">> variable = " << it1.first << endl;
-	// 	for (auto it2 : it1.second) {
-	// 		cout << ">> factor = ";
-	// 		const Factor *f = _factors[it2.first];
-	// 		cout << *f;
-	// 		const Factor *msg = it2.second;
-	// 		cout << ">> msg = " << *msg << endl;
-	// 	}
-	// 	cout << endl;
-	// }
 }
 
 FactorGraph::~FactorGraph()
@@ -324,16 +295,22 @@ FactorGraph::~FactorGraph()
 	_var2fact_msgs.clear();
 }
 
-void
-FactorGraph::update(unsigned iterations)
+unsigned
+FactorGraph::update(unsigned max, double epsilon)
 {
-	for (unsigned i = 0; i < iterations; ++i) {
+	unsigned iterations;
+	for (iterations = 0; iterations < max; ++iterations) {
+		double maxerror = 0.0;
+
 		// variable to factor
 		for (auto it : _var2fact_msgs) {
 			unsigned var_id = it.first;
 			for (auto it2 : it.second) {
 				unsigned fact_id = it2.first;
-				update_variable_to_factor_msg(var_id, fact_id);
+				double err = update_variable_to_factor_msg(var_id, fact_id);
+				if (err > maxerror) {
+					maxerror = err;
+				}
 			}
 		}
 		// factor to variable
@@ -341,33 +318,52 @@ FactorGraph::update(unsigned iterations)
 			unsigned fact_id = it.first;
 			for (auto it2 : it.second) {
 				unsigned var_id = it2.first;
-				update_factor_to_variable_msg(fact_id, var_id);
+				double err = update_factor_to_variable_msg(fact_id, var_id);
+				if (err > maxerror) {
+					maxerror = err;
+				}
 			}
 		}
+
+		if (maxerror < epsilon) break;
 	}
+
+	return iterations;
 }
 
-void
+double
 FactorGraph::update_variable_to_factor_msg(unsigned var_id, unsigned factor_id)
 {
-	const Factor *old_msg = _var2fact_msgs[var_id][factor_id];
-	delete old_msg;
-
-	Factor new_msg(1.0);
+	vector<const Variable*> sc;
+	sc.push_back(_variables[var_id]);
+	Factor new_msg(new Domain(sc), 1.0);
 	for (auto it : _var2fact_msgs[var_id]) {
 		unsigned f_id = it.first;
 		if (f_id == factor_id) continue;
 		new_msg *= *(_fact2var_msgs[f_id][var_id]);
 	}
-	_var2fact_msgs[var_id][factor_id] = new Factor(new_msg.normalize());
+	new_msg = new_msg.normalize();
+
+	const Factor *old_msg = _var2fact_msgs[var_id][factor_id];
+	double maxerror = 0.0;
+	for (unsigned i = 0; i < old_msg->size(); ++i) {
+		double old_val = (*old_msg)[i];
+		double new_val = new_msg[i];
+		double err = fabs(old_val - new_val) / old_val;
+		if (err > maxerror) {
+			maxerror = err;
+		}
+	}
+
+	delete old_msg;
+	_var2fact_msgs[var_id][factor_id] = new Factor(new_msg);
+
+	return maxerror;
 }
 
-void
+double
 FactorGraph::update_factor_to_variable_msg(unsigned factor_id, unsigned var_id)
 {
-	const Factor *old_msg = _fact2var_msgs[factor_id][var_id];
-	delete old_msg;
-
 	Factor new_msg(*_factors[factor_id]);
 	for (auto it : _fact2var_msgs[factor_id]) {
 		unsigned v_id = it.first;
@@ -375,7 +371,23 @@ FactorGraph::update_factor_to_variable_msg(unsigned factor_id, unsigned var_id)
 		new_msg *= *(_var2fact_msgs[v_id][factor_id]);
 		new_msg = new_msg.sum_out(_variables[v_id]);
 	}
-	_fact2var_msgs[factor_id][var_id] = new Factor(new_msg.normalize());
+	new_msg = new_msg.normalize();
+
+	const Factor *old_msg = _fact2var_msgs[factor_id][var_id];
+	double maxerror = 0.0;
+	for (unsigned i = 0; i < old_msg->size(); ++i) {
+		double old_val = (*old_msg)[i];
+		double new_val = new_msg[i];
+		double err = fabs(old_val - new_val) / old_val;
+		if (err > maxerror) {
+			maxerror = err;
+		}
+	}
+
+	delete old_msg;
+	_fact2var_msgs[factor_id][var_id] = new Factor(new_msg);
+
+	return maxerror;
 }
 
 Factor

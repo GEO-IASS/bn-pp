@@ -746,7 +746,8 @@ BN::sum_product(void) const
 	}
 	FactorGraph g(variables, factors);
 
-	g.update(100);
+	unsigned iterations = g.update(10000, 0.001);
+	// cout << ">> Number of iterations = " <<  iterations << endl;
 
 	return g;
 }

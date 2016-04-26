@@ -83,7 +83,7 @@ Factor::operator*=(const Factor &f)
 const double&
 Factor::operator[](unsigned i) const
 {
-    if (i < size()) return _values[i];
+    if (i < size()) return _values.at(i);
     else throw "Factor::operator[]: Index out of range.";
 }
 
