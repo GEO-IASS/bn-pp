@@ -116,19 +116,19 @@ usage(const char *progname)
 	cout << "usage: " << progname << " /path/to/model.uai [/path/to/evidence.uai.evid TASK] [OPTIONS]" << endl;
 	cout << endl;
 	cout << "TASK:" << endl;
-	cout << "-pr\tcompute partition function" << endl;
-	cout << "-mar\tcompute marginals" << endl;
+	cout << "-pr\tsolve partition task" << endl;
+	cout << "-mar\tsolve marginals task" << endl;
 	cout << endl;
 	cout << "OPTIONS:" << endl;
-	cout << "-ls\tsolve inference using logical sampling" << endl;
-	cout << "-lw\tsolve inference using (bounded-variance) likelihood weighting" << endl;
-	cout << "-gs\tsolve inference using gibbs sampling" << endl;
-	cout << "-sp\tsolve inference using sum-product in factor graphs" << endl;
-	cout << "-ve\tsolve inference using variable elimination" << endl;
+	cout << "-ls\tcompute partition using logical sampling" << endl;
+	cout << "-lw\tcompute partition using (bounded-variance) likelihood weighting" << endl;
+	cout << "-gs\tcompute partition using gibbs sampling" << endl;
+	cout << "-sp\tcompute marginals using sum-product in factor graphs" << endl;
+	cout << "-ve\tcompute inference using variable elimination" << endl;
 	cout << "-mf\tvariable elimination using min-fill heuristic" << endl;
 	cout << "-wmf\tvariable elimination using weighted min-fill heuristic" << endl;
 	cout << "-md\tvariable elimination using min-degree heuristic" << endl;
-	cout << "-bb\tsolve inference using bayes-ball" << endl;
+	cout << "-bb\tvariable elimination using bayes-ball" << endl;
 	cout << "-h\tdisplay help information" << endl;
 	cout << "-v\tverbose" << endl;
 }

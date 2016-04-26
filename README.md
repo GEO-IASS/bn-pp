@@ -17,18 +17,19 @@ $ ./bn -h
 usage: ./bn /path/to/model.uai [/path/to/evidence.uai.evid TASK] [OPTIONS]
 
 TASK:
--pr	 compute partition function
--mar compute marginals
+-pr	 solve partition task
+-mar solve marginals task
 
 OPTIONS:
--ls   solve inference using logical sampling
--lw   solve inference using (bounded-variance) likelihood weighting
--gs   solve inference using gibbs sampling
--ve   solve inference using variable elimination
+-ls   compute partition using logical sampling
+-lw   compute partition using (bounded-variance) likelihood weighting
+-gs   compute partition using gibbs sampling
+-sp   compute marginals using sum-product in factor graphs
+-ve   compute inference using variable elimination
 -mf   variable elimination using min-fill heuristic
 -wmf  variable elimination using weighted min-fill heuristic
 -md   variable elimination using min-degree heuristic
--bb   solve inference using bayes-ball
+-bb   variable elimination using bayes-ball
 -h    display help information
 -v    verbose
 ```
