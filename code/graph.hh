@@ -12,7 +12,7 @@ namespace bn {
 
 	class Graph {
 	public:
-		Graph(const std::vector<const Variable*>, const std::vector<const Factor*> &factors);
+		Graph(const std::vector<const Variable*> &variables, const std::vector<const Factor*> &factors);
 		Graph(const Graph &g);
 
 		std::unordered_set<unsigned> neighbors(unsigned id) const { return _adj.find(id)->second; };
@@ -34,6 +34,24 @@ namespace bn {
 	private:
 		const std::vector<const Variable*> _variables;
 		std::unordered_map<unsigned,std::unordered_set<unsigned>> _adj;
+	};
+
+	class FactorGraph {
+	public:
+		FactorGraph(const std::vector<const Variable*> &variables, const std::vector<const Factor*> &factors);
+		~FactorGraph();
+
+		void update(unsigned iterations);
+		Factor marginal(const Variable *v) const;
+
+	private:
+		std::vector<const Variable*> _variables;
+		std::vector<const Factor*> _factors;
+		std::unordered_map<unsigned,std::unordered_map<unsigned,const Factor*>> _var2fact_msgs;
+		std::unordered_map<unsigned,std::unordered_map<unsigned,const Factor*>> _fact2var_msgs;
+
+		void update_variable_to_factor_msg(unsigned var_id, unsigned factor_id);
+		void update_factor_to_variable_msg(unsigned factor_id, unsigned var_id);
 	};
 
 }

@@ -308,20 +308,34 @@ BN::marginals(
 {
 	auto start = chrono::steady_clock::now();
 
-	vector<const Factor*> factors;
-	for (auto const pf : _factors) {
-		factors.push_back(new Factor(pf->conditioning(evidence)));
-	}
-
 	vector<const Factor*> marg;
-	for (auto const pv : _variables) {
-		vector<const Variable*> vars;
-		for (auto const pv2 : _variables) {
-			if (pv2 != pv) {
-				vars.push_back(pv2);
-			}
+
+	if (options["sum-product"]) {
+		FactorGraph g = sum_product();
+		for (auto const pv : _variables) {
+			marg.push_back(new Factor(g.marginal(pv)));
 		}
-		marg.push_back(new Factor(variable_elimination(vars, factors, options).normalize()));
+	}
+	// variable elimination by default
+	else {
+		vector<const Factor*> factors;
+		for (auto const pf : _factors) {
+			factors.push_back(new Factor(pf->conditioning(evidence)));
+		}
+
+		for (auto const pv : _variables) {
+			vector<const Variable*> vars;
+			for (auto const pv2 : _variables) {
+				if (pv2 != pv) {
+					vars.push_back(pv2);
+				}
+			}
+			marg.push_back(new Factor(variable_elimination(vars, factors, options).normalize()));
+		}
+
+		for (auto const pf : factors) {
+			delete pf;
+		}
 	}
 
 	auto end = chrono::steady_clock::now();
@@ -717,6 +731,24 @@ BN::gibbs_sampling(const unordered_map<unsigned,unsigned> &evidence, long unsign
 	blanket_factors.clear();
 
 	return 1.0*N/M;
+}
+
+FactorGraph
+BN::sum_product(void) const
+{
+	vector<const Variable*> variables;
+	for (auto const pv : _variables) {
+		variables.push_back(pv);
+	}
+	vector<const Factor*> factors;
+	for (auto const pf : _factors) {
+		factors.push_back(pf);
+	}
+	FactorGraph g(variables, factors);
+
+	g.update(100);
+
+	return g;
 }
 
 bool

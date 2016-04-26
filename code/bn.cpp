@@ -123,6 +123,7 @@ usage(const char *progname)
 	cout << "-ls\tsolve inference using logical sampling" << endl;
 	cout << "-lw\tsolve inference using (bounded-variance) likelihood weighting" << endl;
 	cout << "-gs\tsolve inference using gibbs sampling" << endl;
+	cout << "-sp\tsolve inference using sum-product in factor graphs" << endl;
 	cout << "-ve\tsolve inference using variable elimination" << endl;
 	cout << "-mf\tvariable elimination using min-fill heuristic" << endl;
 	cout << "-wmf\tvariable elimination using weighted min-fill heuristic" << endl;
@@ -142,6 +143,8 @@ read_parameters(int argc, char *argv[])
 	options["logical-sampling"] = false;
 	options["likelihood-weighting"] = false;
 	options["gibbs-sampling"] = false;
+
+	options["sum-product"] = false;
 
 	options["variable-elimination"] = false;
 	options["bayes-ball"] = false;
@@ -170,6 +173,9 @@ read_parameters(int argc, char *argv[])
 		}
 		else if (param == "-gs") {
 			options["gibbs-sampling"] = true;
+		}
+		else if (param == "-sp") {
+			options["sum-product"] = true;
 		}
 		else if (param == "-ve") {
 			options["variable-elimination"] = true;

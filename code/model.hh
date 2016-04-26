@@ -3,6 +3,7 @@
 
 #include "variable.hh"
 #include "factor.hh"
+#include "graph.hh"
 
 #include <string>
 #include <vector>
@@ -91,6 +92,8 @@ public:
 	double logical_sampling(const std::unordered_map<unsigned,unsigned> &evidence, double delta, double epsilon) const;
 	double likelihood_weighting(const std::unordered_map<unsigned,unsigned> &evidence, double delta, double epsilon) const;
 	double gibbs_sampling(const std::unordered_map<unsigned,unsigned> &evidence, long unsigned M, long unsigned burn_in) const;
+
+	FactorGraph sum_product(void) const;
 
 	const std::unordered_set<const Variable*> parents(const Variable *v)  const { return _parents.find(v)->second;  };
 	const std::unordered_set<const Variable*> children(const Variable *v) const { return _children.find(v)->second; };
